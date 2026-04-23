@@ -1,0 +1,89 @@
+# =========================
+# ENVIRONMENT VARIABLES
+# =========================
+.env
+.env.*
+*.env
+
+# =========================
+# NODE MODULES
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# BUILD / DIST
+# =========================
+dist/
+build/
+.out/
+.next/
+.cache/
+coverage/
+
+# =========================
+# LOG FILES
+# =========================
+*.log
+logs/
+*.log.*
+
+# =========================
+# OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# EDITOR / IDE
+# =========================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# =========================
+# TEMP FILES
+# =========================
+*.tmp
+*.temp
+*.swp
+*.bak
+
+# =========================
+# DATABASE FILES
+# =========================
+*.sqlite
+*.db
+
+# =========================
+# UPLOADS
+# =========================
+uploads/
+public/uploads/
+
+# =========================
+# SUPABASE
+# =========================
+.supabase/
+supabase/.temp/
+
+# =========================
+# TESTING
+# =========================
+coverage/
+.nyc_output/
+
+# =========================
+# MISC
+# =========================
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
