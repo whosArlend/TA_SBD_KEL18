@@ -40,6 +40,6 @@ http://localhost:5173
 
 - Pastikan tidak ada error saat `npm install`
 - Jika port sudah digunakan, ubah port di konfigurasi Vite
-=======
+
 # TEKSPACE
 Sistem reservasi dan pengelolaan ruangan
