@@ -157,7 +157,7 @@ function onSubmit(e: React.FormEvent) {
 
             <div className="mb-10 space-y-3">
               <h1 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-[44px] sm:leading-[1.05]">
-                Buat akun Anda
+                Register
               </h1>
               <p className="max-w-sm text-[15px] leading-6 text-slate-600">
                 Daftar untuk memudahkan reservasi ruang kampus dan koordinasi
