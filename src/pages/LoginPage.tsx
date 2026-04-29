@@ -276,12 +276,12 @@ export default function LoginPage() {
           <div className="relative flex h-full items-center px-16">
             <div className="max-w-xl">
               <h2 className="text-[52px] font-medium leading-[1.05] tracking-tight text-white">
-                Streamlining space management within your building.
+                Smart room reservation for your campus.
               </h2>
               <p className="mt-6 max-w-lg text-sm leading-6 text-white/75">
-                TEKSPACE empowers modern organizations with intelligent room
-                scheduling, real-time availability tracking, and seamless
-                workplace orchestration designed for institutional reliability.
+                TEKSPACE menyediakan sistem reservasi ruangan berbasis web dengan
+                informasi ketersediaan real-time untuk mendukung aktivitas akademik
+                yang lebih efisien dan terstruktur.
               </p>
             </div>
           </div>

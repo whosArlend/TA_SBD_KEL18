@@ -353,11 +353,12 @@ export default function RegisterPage() {
 
             <div className="mt-6 max-w-lg">
               <h2 className="text-[40px] font-semibold leading-[1.1] tracking-tight text-white">
-                Reservasi ruang kampus dengan TEKSPACE.
+                Smart room reservation for your campus.
               </h2>
               <p className="mt-4 max-w-md text-[15px] leading-6 text-white/75">
-                Visualisasikan jadwal, ajukan peminjaman, dan pantau penggunaan
-                ruang secara terpusat untuk mendukung kegiatan akademik.
+                TEKSPACE menyediakan sistem reservasi ruangan berbasis web dengan
+                informasi ketersediaan real-time untuk mendukung aktivitas akademik
+                yang lebih efisien dan terstruktur.
               </p>
             </div>
 
