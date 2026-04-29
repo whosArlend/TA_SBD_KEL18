@@ -86,6 +86,13 @@ export default function LoginPage() {
   const canSubmit = Object.keys(errors).length === 0
   const disabled = !values.identifier.trim() || !values.password
 
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [])
+
   function onBlur(key: LoginKey) {
     setTouched((t) => ({ ...t, [key]: true }))
   }
