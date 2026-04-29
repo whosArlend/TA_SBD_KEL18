@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 📘 Sistem Reservasi Ruangan Kampus - TEKSPACE
 
 Aplikasi web untuk sistem reservasi ruangan kampus yang digunakan oleh mahasiswa dan dosen.
@@ -36,4 +35,3 @@ http://localhost:5173
 =======
 # TEKSPACE
 Sistem reservasi dan pengelolaan ruangan
->>>>>>> 3583f40fbfcec4c5456382ec33253c9369ea598e
