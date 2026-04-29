@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 📘 Sistem Reservasi Ruangan Kampus - TEKSPACE
 
 Aplikasi web untuk sistem reservasi ruangan kampus yang digunakan oleh mahasiswa dan dosen.
@@ -32,3 +33,7 @@ http://localhost:5173
 
 - Pastikan tidak ada error saat `npm install`
 - Jika port sudah digunakan, ubah port di konfigurasi Vite
+=======
+# TEKSPACE
+Sistem reservasi dan pengelolaan ruangan
+>>>>>>> 3583f40fbfcec4c5456382ec33253c9369ea598e
