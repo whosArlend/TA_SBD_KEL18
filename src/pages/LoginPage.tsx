@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TextField from '../components/TextField'
+import { supabase } from '../lib/supabase'
 
 type LoginKey = 'identifier' | 'password'
 type LoginState = Record<LoginKey, string>
@@ -74,6 +75,8 @@ export default function LoginPage() {
   const [submitted, setSubmitted] = React.useState(false)
   const [showPassword, setShowPassword] = React.useState(false)
   const [rememberMe, setRememberMe] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
+  const [apiError, setApiError] = React.useState<string | null>(null)
 
   const navigate = useNavigate()
 
@@ -89,32 +92,76 @@ export default function LoginPage() {
     setValues((v) => ({ ...v, [key]: next }))
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(true)
+    setApiError(null)
     setTouched({ identifier: true, password: true })
 
-    if (canSubmit) {
-      localStorage.setItem('userName', values.identifier)
+    if (!canSubmit) return
 
-      const isAdmin = values.identifier.toLowerCase().includes('admin')
-      localStorage.setItem('role', isAdmin ? 'admin' : 'user')
+    setLoading(true)
+    try {
+      const identifier = values.identifier.trim()
+      const isEmailInput = isEmail(identifier)
+
+      // For now, only email login is supported
+      if (!isEmailInput) {
+        setApiError('Silakan gunakan email untuk login.')
+        return
+      }
+
+      // Sign in with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password: values.password,
+      })
+
+      if (authError) {
+        const msg =
+          authError.message === 'Invalid login credentials'
+            ? 'Email atau password salah.'
+            : authError.message === 'Email not confirmed'
+              ? 'Email belum diverifikasi. Cek inbox email kamu.'
+              : authError.message
+        setApiError(msg)
+        return
+      }
+
+      if (!authData.user) {
+        setApiError('Login gagal. Silakan coba lagi.')
+        return
+      }
+
+      // Fetch role from accounts table
+      const { data: profile } = await supabase
+        .from('accounts')
+        .select('role, full_name')
+        .eq('user_id', authData.user.id)
+        .single()
+
+      const role = profile?.role ?? 'mahasiswa'
+      const isAdmin = role === 'admin'
 
       navigate(isAdmin ? '/admin-dashboard' : '/user-dashboard')
+    } catch (err) {
+      setApiError('Terjadi kesalahan jaringan. Silakan coba lagi.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen bg-white">
       <div className="flex min-h-screen w-full">
-        
+
         {/* LEFT: FORM */}
         <div className="w-full lg:w-1/2 flex flex-col p-8 sm:p-12 lg:p-16">
           <LogoMark />
 
           <div className="flex-1 flex items-center justify-center py-12">
             <div className="w-full max-w-[400px]">
-              
+
               <div className="mb-10">
                 <h1 className="text-4xl font-bold text-slate-900 mb-2">
                   Login
@@ -128,7 +175,7 @@ export default function LoginPage() {
               </div>
 
               <form onSubmit={onSubmit} className="space-y-6">
-                
+
                 {/* IDENTIFIER */}
                 <TextField
                   id="identifier"
@@ -200,7 +247,13 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                {submitted && !canSubmit && (
+                {apiError && (
+                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                    {apiError}
+                  </div>
+                )}
+
+                {submitted && !canSubmit && !apiError && (
                   <div className="text-sm text-red-500">
                     Email/NIM atau password tidak valid.
                   </div>
@@ -208,10 +261,10 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  disabled={disabled}
+                  disabled={disabled || loading}
                   className="w-full h-12 bg-sky-800 text-white rounded-lg font-bold shadow-md hover:bg-sky-900 transition-all disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Login <span className="text-lg">→</span>
+                  {loading ? 'Masuk...' : <>Login <span className="text-lg">→</span></>}
                 </button>
 
                 <p className="text-center text-slate-600 text-sm pt-4">

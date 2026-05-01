@@ -5,6 +5,8 @@ import {
   Calendar, Archive, History, BookOpen, Bookmark, Building2, ClipboardList
 } from 'lucide-react';
 
+import { supabase } from '../lib/supabase';
+
 interface LayoutProps {
   children: ReactNode;
   role: 'admin' | 'user';
@@ -16,8 +18,8 @@ export default function DashboardLayout({ children, role, userName, userRole }: 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    localStorage.clear();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate('/login');
   };
 

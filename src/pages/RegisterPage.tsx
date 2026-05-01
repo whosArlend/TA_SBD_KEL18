@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TextField from '../components/TextField'
+import { supabase } from '../lib/supabase'
 
 type FieldKey = 'fullName' | 'nid' | 'email' | 'password' | 'confirmPassword'
 
@@ -24,14 +25,16 @@ function hasSpecialChar(value: string) {
   return /[^A-Za-z0-9]/.test(value)
 }
 
-function validate(values: FormState): FormErrors {
+function validate(values: FormState, nimExists: boolean = false): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.fullName.trim()) errors.fullName = 'Nama lengkap wajib diisi.'
 
   if (!values.nid.trim()) errors.nid = 'Nomor Induk wajib diisi.'
-  else if (!/^\d{6,}$/.test(values.nid.trim()))
-    errors.nid = 'Nomor Induk harus berupa angka (minimal 6 digit).'
+  else if (!/^\d{5,}$/.test(values.nid.trim()))
+    errors.nid = 'Nomor Induk harus berupa angka (minimal 5 digit).'
+  else if (nimExists)
+    errors.nid = 'NIM/NIP sudah terdaftar.'
 
   if (!values.email.trim()) errors.email = 'Email wajib diisi.'
   else if (!isEmail(values.email)) errors.email = 'Format email tidak valid.'
@@ -54,8 +57,10 @@ function fieldStatus(
   touched: TouchedState,
   errors: FormErrors,
   values: FormState,
+  checkingNim?: boolean
 ) {
   if (!touched[key]) return 'idle' as const
+  if (key === 'nid' && checkingNim) return 'idle' as const
   if (errors[key]) return 'error' as const
   if (values[key].trim()) return 'success' as const
   return 'idle' as const
@@ -112,8 +117,42 @@ export default function RegisterPage() {
     confirmPassword: false,
   })
   const [submitted, setSubmitted] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
+  const [apiError, setApiError] = React.useState<string | null>(null)
+  const [success, setSuccess] = React.useState(false)
 
-  const errors = React.useMemo(() => validate(values), [values])
+  const [nimExists, setNimExists] = React.useState(false)
+  const [checkingNim, setCheckingNim] = React.useState(false)
+
+  // Live Check NIM/NIP
+  React.useEffect(() => {
+    const nim = values.nid.trim()
+    if (nim.length < 5) {
+      setNimExists(false)
+      return
+    }
+
+    const checkNim = async () => {
+      setCheckingNim(true)
+      try {
+        const { data, error } = await supabase.rpc('check_nim_exists', { nim_to_check: nim })
+        if (!error && data) {
+          setNimExists(true)
+        } else {
+          setNimExists(false)
+        }
+      } catch (err) {
+        // ignore
+      } finally {
+        setCheckingNim(false)
+      }
+    }
+
+    const timeoutId = setTimeout(checkNim, 600) // debounce 600ms
+    return () => clearTimeout(timeoutId)
+  }, [values.nid])
+
+  const errors = React.useMemo(() => validate(values, nimExists), [values, nimExists])
   const canSubmit = Object.keys(errors).length === 0
 
   function onBlur(key: FieldKey) {
@@ -124,9 +163,10 @@ export default function RegisterPage() {
     setValues((v) => ({ ...v, [key]: next }))
   }
 
-function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(true)
+    setApiError(null)
     setTouched({
       fullName: true,
       nid: true,
@@ -135,12 +175,52 @@ function onSubmit(e: React.FormEvent) {
       confirmPassword: true,
     })
 
-    if (canSubmit) {
-      localStorage.setItem('userName', values.fullName)
-      
+    if (!canSubmit) return
+
+    setLoading(true)
+    try {
+      // Create auth user in Supabase
+      // The database trigger (handle_new_user) will auto-insert into accounts table
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email.trim(),
+        password: values.password,
+        options: {
+          data: {
+            full_name: values.fullName.trim(),
+            nim_nip: values.nid.trim(),
+          },
+        },
+      })
+
+      if (authError) {
+        // Translate common errors to Indonesian
+        const msg =
+          authError.message === 'User already registered'
+            ? 'Email sudah terdaftar. Silakan login.'
+            : authError.message.includes('Database error saving new user')
+              ? 'Pendaftaran gagal. NIM/NIP mungkin sudah terdaftar.'
+              : authError.message
+        setApiError(msg)
+        setLoading(false)
+        return
+      }
+
+      if (!authData.user) {
+        setApiError('Gagal membuat akun. Silakan coba lagi.')
+        setLoading(false)
+        return
+      }
+
+      setSuccess(true)
+      setLoading(false)
+
+      // Redirect after showing success
       setTimeout(() => {
-        navigate('/dashboard')
-      }, 1500)
+        navigate('/login')
+      }, 2500)
+    } catch (err) {
+      setApiError('Terjadi kesalahan jaringan. Silakan coba lagi.')
+      setLoading(false)
     }
   }
 
@@ -203,8 +283,8 @@ function onSubmit(e: React.FormEvent) {
                 autoComplete="off"
                 inputMode="numeric"
                 required
-                status={fieldStatus('nid', touched, errors, values)}
-                message={touched.nid ? errors.nid : undefined}
+                status={fieldStatus('nid', touched, errors, values, checkingNim)}
+                message={touched.nid ? errors.nid : checkingNim ? 'Mengecek ketersediaan...' : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
@@ -305,13 +385,19 @@ function onSubmit(e: React.FormEvent) {
                 }
               />
 
-              {submitted && canSubmit ? (
+              {success ? (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                  Registrasi valid (UI). Silakan hubungkan ke API saat siap.
+                  ✅ Registrasi berhasil! Silakan cek email untuk verifikasi. Mengalihkan ke halaman login...
                 </div>
               ) : null}
 
-              {submitted && !canSubmit ? (
+              {apiError ? (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                  {apiError}
+                </div>
+              ) : null}
+
+              {submitted && !canSubmit && !apiError ? (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
                   Periksa kembali input yang masih bermasalah.
                 </div>
@@ -319,9 +405,10 @@ function onSubmit(e: React.FormEvent) {
 
               <button
                 type="submit"
+                disabled={loading || success}
                 className="mt-2 h-11 w-full rounded-md bg-sky-800 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-900 focus:outline-none focus:ring-4 focus:ring-sky-600/20 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                Register
+                {loading ? 'Mendaftarkan...' : success ? 'Berhasil ✓' : 'Register'}
               </button>
 
               <p className="pt-5 text-center text-sm text-slate-600">
