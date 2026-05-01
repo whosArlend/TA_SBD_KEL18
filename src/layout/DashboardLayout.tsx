@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Search, Bell, HelpCircle, LogOut, LayoutDashboard, Calendar, Archive, History, BookOpen, Bookmark } from 'lucide-react';
+import { Search, Bell, HelpCircle, LogOut, LayoutDashboard, Calendar, History, BookOpen, Bookmark } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
