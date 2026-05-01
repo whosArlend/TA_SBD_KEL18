@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Search, Bell, HelpCircle, LogOut, LayoutDashboard, Calendar, History, BookOpen, Bookmark } from 'lucide-react';
+import { Search, Bell, HelpCircle, LogOut, LayoutDashboard, Calendar, History, ClipboardList, BookOpen, Bookmark } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,6 +21,7 @@ export default function DashboardLayout({ children, role, userName, userRole }: 
   const adminMenu = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/admin-dashboard' },
     { name: 'Room Management', icon: Calendar, path: '/room-management' },
+    { name: 'Booking Approvals', icon: ClipboardList, path: '/booking-approvals' },
     { name: 'Activity Feed', icon: History, path: '/activity-feed' },
   ];
 

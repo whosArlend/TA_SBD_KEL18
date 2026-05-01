@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import AdminDashboard from './pages/AdminDashboard'
 import ActivityFeedPage from './pages/ActivityFeedPage'
+import BookingApprovalsPage from './pages/BookingApprovalsPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import UserDashboard from './pages/UserDashboard'
@@ -35,6 +36,7 @@ export default function App() {
         {/* Admin-only routes */}
         <Route element={<AdminRoute />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/booking-approvals" element={<BookingApprovalsPage />} />
           <Route path="/room-management" element={<RoomManagementPage />} />
           <Route path="/activity-feed" element={<ActivityFeedPage />} />
         </Route>
