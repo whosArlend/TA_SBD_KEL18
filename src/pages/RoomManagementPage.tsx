@@ -85,7 +85,7 @@ export default function RoomManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {rooms.map((room, idx) => (
+                {rooms.map((room) => (
                   <tr key={room.name} className="border-b last:border-b-0">
                     <td className="py-3 flex items-center gap-3">
                       <img src={room.image} alt={room.name} className="w-12 h-8 object-cover rounded" />
