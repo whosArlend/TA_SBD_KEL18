@@ -42,7 +42,7 @@ export default function DashboardLayout({ children, role, userName, userRole }: 
           <div>
             <h1 className="text-white font-bold tracking-wider uppercase">Tekspace</h1>
             <p className="text-xs text-slate-400">
-              {role === 'admin' ? 'Admin Panel' : 'Student Portal'}
+              {role === 'admin' ? 'Admin Panel' : 'Corporate Portal'}
             </p>
           </div>
         </div>
@@ -66,12 +66,17 @@ export default function DashboardLayout({ children, role, userName, userRole }: 
         </nav>
 
         <div className="p-4 border-t border-slate-800">
+          {role === 'user' && (
+            <button className="w-full mb-4 bg-[#0088FF] text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition flex items-center justify-center gap-2">
+              <span className="text-lg">⊕</span> Book Now
+            </button>
+          )}
           <button 
             onClick={handleLogout} 
             className="flex items-center gap-3 px-2 py-3 w-full text-slate-400 hover:text-white transition"
           >
             <LogOut size={20} />
-            Keluar
+            Log Out
           </button>
         </div>
       </aside>
@@ -80,23 +85,31 @@ export default function DashboardLayout({ children, role, userName, userRole }: 
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8">
           <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-lg w-96 border border-slate-200">
             <Search size={20} className="text-slate-400" />
-            <input type="text" placeholder="Cari ruangan..." className="bg-transparent border-none outline-none w-full text-sm" />
+            <input type="text" placeholder="Search for rooms or bookings..." className="bg-transparent border-none outline-none w-full text-sm" />
           </div>
           
           <div className="flex items-center gap-6">
-            <button className="text-slate-400 hover:text-slate-600"><Bell size={20} /></button>
+            {/* Tombol Lonceng Notifikasi */}
+            <button 
+              onClick={() => navigate('/user-activity')}
+              className={`transition-colors ${location.pathname === '/user-activity' ? 'text-[#0088FF]' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <Bell size={20} />
+            </button>
+            {/* Tombol Help Center */}
             <button 
               onClick={() => navigate('/help-center')}
               className={`transition-colors ${location.pathname === '/help-center' ? 'text-[#0088FF]' : 'text-slate-400 hover:text-slate-600'}`}
             >
               <HelpCircle size={20} />
             </button>
+
             <div className="flex items-center gap-3 border-l pl-6">
               <div className="text-right">
                 <p className="text-sm font-bold text-slate-800">{userName}</p>
-                <p className="text-xs text-slate-500 uppercase">{userRole}</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest">{userRole}</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-200">
                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="avatar" />
               </div>
             </div>

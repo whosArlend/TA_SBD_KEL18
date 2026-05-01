@@ -1,11 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layout/DashboardLayout';
 
 export default function UserDashboard() {
-  // Ambil nama dari memori browser, kalau tidak ada baru pakai default yaitu 'User Baru'
   const fullName = localStorage.getItem('userName') || 'User Baru';
-  
-  // Ambil kata pertama saja untuk ucapan "Welcome back, [Nama Depan]!"
   const firstName = fullName.split(' ')[0];
+  const navigate = useNavigate();
 
   return (
     <DashboardLayout role="user" userName={fullName} userRole="PROJECT LEAD">
@@ -25,9 +24,9 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (Stats & Upcoming) */}
-        <div className="col-span-2 flex flex-col gap-8">
+        <div className="lg:col-span-2 flex flex-col gap-8">
           
           {/* Stats Cards */}
           <div className="grid grid-cols-3 gap-6">
@@ -74,22 +73,32 @@ export default function UserDashboard() {
           </div>
         </div>
 
-        {/* Right Column (Recent Activity) */}
+        {/* Right Column (Recent Activity Preview) */}
         <div className="bg-white border border-slate-200 rounded-xl flex flex-col h-fit">
-          <div className="p-6 border-b border-slate-200">
+          <div className="p-6 border-b border-slate-200 flex justify-between items-center">
             <h3 className="text-lg font-bold text-slate-800">Recent Activity</h3>
           </div>
           <div className="p-6 flex flex-col gap-6">
             <div className="flex gap-4">
-              <div className="w-8 h-8 mt-1 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-sm">✓</div>
+              <div className="w-8 h-8 mt-1 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-sm">✓</div>
               <div>
-                <p className="text-sm text-slate-800">Your request for Alpha Suite was <span className="bg-green-100 text-green-700 px-1 rounded text-xs font-bold">APPROVED</span></p>
-                <p className="text-xs text-slate-400 mt-1 font-bold">2 HOURS AGO</p>
+                <p className="text-sm text-slate-800">Your request for <span className="font-bold">Innovation Lab</span> was <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide">APPROVED</span></p>
+                <p className="text-xs text-slate-400 mt-1 font-bold">BARU SAJA</p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-8 h-8 mt-1 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 text-sm font-bold">↻</div>
+              <div>
+                <p className="text-sm text-slate-800">Schedule changed for <span className="font-bold">Boardroom</span> <span className="bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide">RESCHEDULED</span></p>
+                <p className="text-xs text-slate-400 mt-1 font-bold">2 JAM YANG LALU</p>
               </div>
             </div>
           </div>
-          <div className="p-4 border-t border-slate-200 text-center">
-            <button className="text-slate-600 font-medium text-sm hover:text-slate-800 border border-slate-200 px-4 py-2 rounded-lg w-full">
+          <div className="p-4 border-t border-slate-200 text-center bg-slate-50 rounded-b-xl">
+            <button 
+              onClick={() => navigate('/user-activity')}
+              className="text-slate-600 font-medium text-sm hover:text-slate-800 border border-slate-300 px-4 py-2 rounded-lg w-full bg-white hover:bg-slate-50 transition-colors shadow-sm"
+            >
               View All Notifications
             </button>
           </div>

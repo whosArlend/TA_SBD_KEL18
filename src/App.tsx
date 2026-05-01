@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage'
 import UserDashboard from './pages/UserDashboard'
 import RoomManagementPage from './pages/RoomManagementPage'
 import HelpCenterPage from './pages/HelpCenter'
+import UserActivityPage from './pages/UserActivityPage'
 
 export default function App() {
   return (
@@ -18,6 +19,10 @@ export default function App() {
       <Route path="/activity-feed" element={<ActivityFeedPage />} />
       <Route path="/user-dashboard" element={<UserDashboard />} />
       <Route path="/help-center" element={<HelpCenterPage />} />
+      
+      {/* Route Baru untuk Notifikasi User */}
+      <Route path="/user-activity" element={<UserActivityPage />} />
+      
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
