@@ -1,249 +1,237 @@
-import * as React from 'react'
-import DashboardLayout from '../layout/DashboardLayout'
+import * as React from 'react';
+import DashboardLayout from '../layout/DashboardLayout';
+import { 
+  CalendarPlus, 
+  XCircle, 
+  RotateCw, 
+  ArrowLeftSquare, 
+  Clock, 
+  Users, 
+  ArrowRight,
+  Check
+} from 'lucide-react';
 
-type ActivityTab = 'all' | 'approvals' | 'canceled' | 'returned'
+type ActivityTab = 'all' | 'approvals' | 'canceled' | 'returned';
 
-interface ActivityItem {
-  id: string
-  type: 'booking' | 'canceled' | 'rescheduled' | 'returned'
-  title: string
-  description: string
-  actor: string
-  role: string
-  timestamp: string
-  details?: string
-  badge?: string
-}
-
-export default function AdminDashboard() {
-  const fullName = localStorage.getItem('userName') || 'System Admin'
-  const [activeTab, setActiveTab] = React.useState<ActivityTab>('all')
-
-  const activities: ActivityItem[] = [
-    {
-      id: '1',
-      type: 'booking',
-      title: 'New Booking: Room 302',
-      description: "Sarah Jenkins (Senior Analyst) reserved the Executive Suite for a 'Quarterly Strategy Session'.",
-      actor: 'Sarah Jenkins',
-      role: 'Senior Analyst',
-      timestamp: '2 mins ago',
-      details: '14:00 – 16:30  •  12 People',
-    },
-    {
-      id: '2',
-      type: 'canceled',
-      title: 'Cancelled: Studio B',
-      description: 'Mark Thompson (Creative Director) released the reservation due to schedule conflict.',
-      actor: 'Mark Thompson',
-      role: 'Creative Director',
-      timestamp: '18 mins ago',
-      badge: 'HIGH PRIORITY RELEASE',
-    },
-    {
-      id: '3',
-      type: 'rescheduled',
-      title: 'Rescheduled: Tech Hub',
-      description: 'Development Team A moved "Sprint Planning" from Tuesday 10:00 to Wednesday 09:00',
-      actor: 'Development Team A',
-      role: 'Team Lead',
-      timestamp: '1 hour ago',
-      details: 'Aug 14, 9:00 → Aug 15, 09:00',
-    },
-    {
-      id: '4',
-      type: 'returned',
-      title: 'Returned Early: Executive Suite 302',
-      description: 'Sarah Jenkins ended their booking 30 minutes ahead of schedule. Room is now available.',
-      actor: 'Sarah Jenkins',
-      role: 'Senior Analyst',
-      timestamp: '3 hours ago',
-      badge: 'RETURNED EARLY',
-    },
-  ]
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'booking':
-        return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-      case 'canceled':
-        return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-      case 'rescheduled':
-        return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 2m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-      case 'returned':
-        return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-      default:
-        return null
-    }
-  }
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'booking':
-        return 'bg-blue-100 text-blue-600'
-      case 'canceled':
-        return 'bg-red-100 text-red-600'
-      case 'rescheduled':
-        return 'bg-amber-100 text-amber-600'
-      case 'returned':
-        return 'bg-emerald-100 text-emerald-600'
-      default:
-        return 'bg-slate-100 text-slate-600'
-    }
-  }
+export default function ActivityFeedPage() {
+  const fullName = localStorage.getItem('userName') || 'Alex Rivera';
+  const [activeTab, setActiveTab] = React.useState<ActivityTab>('all');
 
   return (
     <DashboardLayout role="admin" userName={fullName} userRole="System Admin">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-1">Activity Feed</h1>
-        <p className="text-slate-600">Real-time logs of all space operations and system events.</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-6">
-        {/* Left: Activity Feed */}
-        <div className="col-span-2 bg-white rounded-xl border border-slate-200">
-          {/* Tabs */}
-          <div className="px-6 pt-6 pb-0 border-b border-slate-200 flex items-center justify-between">
-            <div className="flex gap-6">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`pb-4 px-1 text-sm font-medium border-b-2 transition ${
-                  activeTab === 'all'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                All Activity
-              </button>
-              <button
-                onClick={() => setActiveTab('approvals')}
-                className={`pb-4 px-1 text-sm font-medium border-b-2 transition ${
-                  activeTab === 'approvals'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Approvals
-              </button>
-              <button
-                onClick={() => setActiveTab('canceled')}
-                className={`pb-4 px-1 text-sm font-medium border-b-2 transition ${
-                  activeTab === 'canceled'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Canceled
-              </button>
-              <button
-                onClick={() => setActiveTab('returned')}
-                className={`pb-4 px-1 text-sm font-medium border-b-2 transition ${
-                  activeTab === 'returned'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Returned Early
-              </button>
-            </div>
-            <button className="text-sm font-semibold text-sky-700 hover:text-sky-800 bg-sky-50 px-4 py-2 rounded-md">
-              ✓ Mark all as read
-            </button>
+      <div className="p-8 max-w-7xl mx-auto">
+        
+        {/* HEADER SECTION */}
+        <div className="flex justify-between items-end mb-6">
+          <div>
+            <h1 className="text-[32px] font-bold text-slate-900 mb-2">Activity Feed</h1>
+            <p className="text-slate-500 text-[15px]">Real-time logs of all space operations and system events.</p>
           </div>
-
-          {/* Activity Items */}
-          <div className="p-6 space-y-6">
-            {activities.map((activity) => (
-              <div key={activity.id} className="flex gap-4 pb-6 border-b border-slate-100 last:border-b-0 last:pb-0">
-                <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center ${getActivityColor(activity.type)}`}>
-                  {getActivityIcon(activity.type)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h4 className="font-semibold text-slate-900">{activity.title}</h4>
-                      <p className="text-sm text-slate-600 mt-1">{activity.description}</p>
-                      {activity.details && (
-                        <p className="text-xs text-slate-500 mt-2">
-                          <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 2m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                          {activity.details}
-                        </p>
-                      )}
-                    </div>
-                    <span className="text-xs text-slate-500 whitespace-nowrap">{activity.timestamp}</span>
-                  </div>
-                  {activity.badge && (
-                    <span className={`inline-block mt-3 text-xs font-bold px-2 py-1 rounded ${
-                      activity.badge === 'HIGH PRIORITY RELEASE'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-purple-100 text-purple-700'
-                    }`}>
-                      {activity.badge}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Load More */}
-          <div className="px-6 py-4 text-center border-t border-slate-200">
-            <button className="text-blue-600 font-medium text-sm hover:underline">Load older activities...</button>
-          </div>
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-[#0088FF] text-[#0088FF] font-medium rounded-md hover:bg-blue-50 transition-colors text-sm shadow-sm">
+            <Check size={16} />
+            Mark all as read
+          </button>
         </div>
 
-        {/* Right: Activity Summary & Urgent Attention */}
-        <div className="flex flex-col gap-6">
-          {/* Activity Summary */}
-          <div className="bg-gradient-to-br from-sky-600 to-blue-700 rounded-xl p-6 text-white">
-            <h3 className="text-sm font-bold tracking-wide mb-4">ACTIVITY SUMMARY</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-3xl font-bold">124</p>
-                <p className="text-sm text-sky-100">Total Events Today</p>
+        {/* TABS */}
+        <div className="flex gap-8 border-b border-slate-200 mb-8 px-2">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`pb-4 text-[15px] font-medium transition-colors relative ${
+              activeTab === 'all' ? 'text-[#0088FF]' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            All Activity
+            {activeTab === 'all' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0088FF]" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('approvals')}
+            className={`pb-4 text-[15px] font-medium transition-colors relative ${
+              activeTab === 'approvals' ? 'text-[#0088FF]' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Approvals
+            {activeTab === 'approvals' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0088FF]" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('canceled')}
+            className={`pb-4 text-[15px] font-medium transition-colors relative ${
+              activeTab === 'canceled' ? 'text-[#0088FF]' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Canceled
+            {activeTab === 'canceled' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0088FF]" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('returned')}
+            className={`pb-4 text-[15px] font-medium transition-colors relative ${
+              activeTab === 'returned' ? 'text-[#0088FF]' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Returned Early
+            {activeTab === 'returned' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0088FF]" />}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* LEFT COLUMN: Activity List */}
+          <div className="lg:col-span-2 flex flex-col gap-5">
+            
+            {/* ITEM 1 */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex gap-5 hover:border-blue-200 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center flex-shrink-0 border border-sky-100">
+                <CalendarPlus className="w-6 h-6 text-sky-600" />
               </div>
-              <div className="space-y-3 pt-4 border-t border-sky-400/30">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-sky-100">Bookings</span>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-24 bg-sky-400 rounded-full" />
-                    <span className="font-bold text-sm">86</span>
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-[17px] font-semibold text-slate-900">New Booking: Room 302</h3>
+                  <span className="text-sm text-slate-500">2 mins ago</span>
+                </div>
+                <p className="text-[15px] text-slate-600 mb-4 leading-relaxed">
+                  <span className="font-bold text-slate-800">Sarah Jenkins</span> (Senior Analyst) reserved the Executive Suite for a 'Quarterly Strategy Session'.
+                </p>
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 rounded-md text-sm border border-slate-200">
+                    <Clock size={14} className="text-slate-400" /> 14:00 - 16:30
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 rounded-md text-sm border border-slate-200">
+                    <Users size={14} className="text-slate-400" /> 12 People
                   </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-sky-100">Cancellations</span>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-12 bg-red-400 rounded-full" />
-                    <span className="font-bold text-sm">12</span>
-                  </div>
+              </div>
+            </div>
+
+            {/* ITEM 2 */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex gap-5 hover:border-rose-200 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0 border border-rose-100">
+                <XCircle className="w-6 h-6 text-rose-600" />
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-[17px] font-semibold text-slate-900">Canceled: Studio B</h3>
+                  <span className="text-sm text-slate-500">18 mins ago</span>
+                </div>
+                <p className="text-[15px] text-slate-600 mb-4 leading-relaxed">
+                  <span className="font-bold text-slate-800">Mark Thompson</span> (Creative Director) released the reservation due to schedule conflict.
+                </p>
+                <span className="inline-block px-2.5 py-1 bg-red-50 text-red-700 text-[11px] font-bold rounded uppercase tracking-wide border border-red-100">
+                  HIGH PRIORITY RELEASE
+                </span>
+              </div>
+            </div>
+
+            {/* ITEM 3 */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex gap-5 hover:border-amber-200 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
+                <RotateCw className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-[17px] font-semibold text-slate-900">Rescheduled: Tech Hub</h3>
+                  <span className="text-sm text-slate-500">1 hour ago</span>
+                </div>
+                <p className="text-[15px] text-slate-600 mb-3 leading-relaxed">
+                  <span className="font-bold text-slate-800">Development Team A</span> moved 'Sprint Planning' from Tuesday 10:00 to Wednesday 09:00.
+                </p>
+                <div className="flex items-center gap-3 text-sm font-medium">
+                  <span className="text-slate-400 line-through">Aug 14, 10:00</span>
+                  <ArrowRight size={16} className="text-slate-400" />
+                  <span className="text-[#0088FF]">Aug 15, 09:00</span>
                 </div>
               </div>
+            </div>
+
+            {/* ITEM 4 */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex gap-5 hover:border-indigo-200 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0 border border-indigo-100">
+                <ArrowLeftSquare className="w-6 h-6 text-indigo-600" />
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-[17px] font-semibold text-slate-900">Returned Early: Executive Suite 302</h3>
+                  <span className="text-sm text-slate-500">3 hours ago</span>
+                </div>
+                <p className="text-[15px] text-slate-600 mb-4 leading-relaxed">
+                  <span className="font-bold text-slate-800">Sarah Jenkins</span> ended their booking 30 minutes ahead of schedule. Room is now available.
+                </p>
+                <span className="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[11px] font-bold rounded uppercase tracking-wide border border-indigo-100">
+                  RETURNED EARLY
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 text-center pb-8">
+              <button className="text-[#0088FF] font-medium hover:underline text-[15px]">
+                Load older activities...
+              </button>
             </div>
           </div>
 
-          {/* Urgent Attention */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm font-bold text-slate-900">Urgent Attention</span>
-              <div className="w-2 h-2 bg-red-500 rounded-full" />
+          {/* RIGHT COLUMN: Widgets */}
+          <div className="flex flex-col gap-6">
+            
+            {/* Widget: ACTIVITY SUMMARY */}
+            <div className="bg-[#0065A1] rounded-xl p-6 shadow-md text-white">
+              <h3 className="text-[11px] font-bold tracking-widest text-sky-100 mb-6 uppercase">Activity Summary</h3>
+              
+              <div className="mb-8">
+                <div className="text-[44px] leading-none font-bold mb-2">124</div>
+                <div className="text-sky-100 text-[15px]">Total Events Today</div>
+              </div>
+              
+              <div className="space-y-5">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sky-100 text-sm">Bookings</span>
+                    <span className="font-bold text-[17px]">86</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#004A77] rounded-full overflow-hidden">
+                    <div className="w-[70%] h-full bg-white rounded-full"></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sky-100 text-sm">Cancellations</span>
+                    <span className="font-bold text-[17px]">12</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#004A77] rounded-full overflow-hidden">
+                    <div className="w-[15%] h-full bg-white rounded-full"></div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Rescheduled Booking */}
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <h4 className="font-semibold text-slate-900 text-sm mb-1">Rescheduled Booking</h4>
-              <p className="text-xs text-slate-600 mb-3">Room 204: 4:30 PM Today</p>
-              <button className="text-xs font-bold text-blue-700 hover:text-blue-800">REVIEW CHANGE</button>
+            {/* Widget: URGENT ATTENTION */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-[17px] font-bold text-slate-800">Urgent Attention</h3>
+                <div className="w-2 h-2 rounded-full bg-rose-600 shadow-[0_0_8px_rgba(225,29,72,0.6)]"></div>
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                <div className="bg-sky-50 border-l-4 border-[#0088FF] p-4 rounded-r-lg">
+                  <h4 className="font-bold text-slate-900 mb-1 text-[15px]">Rescheduled Booking</h4>
+                  <p className="text-sm text-slate-600 mb-3">Room 204: 4:30 PM Today</p>
+                  <button className="text-[11px] font-bold text-[#0088FF] hover:text-blue-800 tracking-wider uppercase">
+                    Review Change
+                  </button>
+                </div>
+                
+                <div className="bg-[#FFF8F1] border-l-4 border-orange-400 p-4 rounded-r-lg">
+                  <h4 className="font-bold text-slate-900 mb-1 text-[15px]">Approvals Pending</h4>
+                  <p className="text-sm text-slate-600 mb-3">4 new board room requests</p>
+                  <button className="text-[11px] font-bold text-orange-700 hover:text-orange-800 tracking-wider uppercase">
+                    View Queue
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Approvals Pending */}
-            <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-              <h4 className="font-semibold text-slate-900 text-sm mb-1">Approvals Pending</h4>
-              <p className="text-xs text-slate-600 mb-3">4 new board room requests</p>
-              <button className="text-xs font-bold text-amber-700 hover:text-amber-800">VIEW 4 QUEUE</button>
-            </div>
           </div>
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }
