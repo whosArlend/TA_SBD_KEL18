@@ -1,10 +1,8 @@
 import DashboardLayout from '../layout/DashboardLayout';
 
 export default function BookingsPage() {
-  const userName = localStorage.getItem('userName') ?? 'Admin';
-
   return (
-    <DashboardLayout role="admin" userName={userName} userRole="Administrator">
+    <DashboardLayout>
       <div className="p-8">
         <h1 className="text-2xl font-bold text-slate-800 mb-2">Bookings</h1>
         <p className="text-slate-500 mb-8">Kelola semua pemesanan ruangan yang masuk.</p>

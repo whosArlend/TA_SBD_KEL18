@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import DashboardLayout from '../layout/DashboardLayout';
 import { BookOpen, HelpCircle, MessageSquare, Mail, ChevronDown } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function HelpCenter() {
-  const fullName = localStorage.getItem('userName') || 'User Baru';
+  const { fullName: authName } = useAuth();
+  const displayName = authName ?? 'Mahasiswa';
 
   // State untuk melacak FAQ mana yang sedang terbuka (null berarti tertutup semua)
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -56,7 +58,7 @@ export default function HelpCenter() {
   ];
 
   return (
-    <DashboardLayout role="user" userName={fullName} userRole="PROJECT LEAD">
+    <DashboardLayout>
       {/* Header Section */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">Pusat Bantuan & Panduan</h2>
@@ -99,8 +101,7 @@ export default function HelpCenter() {
               {/* Tombol WhatsApp Terintegrasi */}
               <button 
                 onClick={() => {
-                  const nama = localStorage.getItem('userName') || 'Mahasiswa';
-                  const pesan = `Halo Admin TEKSPACE, saya ${nama}. Saya butuh bantuan terkait reservasi ruangan kampus.`;
+                  const pesan = `Halo Admin TEKSPACE, saya ${displayName}. Saya butuh bantuan terkait reservasi ruangan kampus.`;
                   // Ganti nomor di bawah dengan nomor WhatsApp admin yang asli (gunakan format 62)
                   window.open(`https://wa.me/6287822408980?text=${encodeURIComponent(pesan)}`, '_blank');
                 }}
@@ -116,9 +117,8 @@ export default function HelpCenter() {
               {/* Tombol Email Terintegrasi */}
               <button 
                 onClick={() => {
-                  const nama = localStorage.getItem('userName') || 'Mahasiswa';
-                  const subject = `[TEKSPACE Support] Butuh Bantuan - ${nama}`;
-                  const body = `Halo Tim Support TEKSPACE,%0D%0A%0D%0ASaya ${nama} ingin bertanya mengenai...`;
+                  const subject = `[TEKSPACE Support] Butuh Bantuan - ${displayName}`;
+                  const body = `Halo Tim Support TEKSPACE,%0D%0A%0D%0ASaya ${displayName} ingin bertanya mengenai...`;
                   window.location.href = `mailto:support@spacereserve.com?subject=${subject}&body=${body}`;
                 }}
                 className="w-full bg-white/20 hover:bg-white/30 transition border border-white/30 rounded-lg p-3 flex items-center gap-4 text-left"

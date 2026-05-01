@@ -57,7 +57,7 @@ const initialRequests: BookingRequest[] = [
 ]
 
 export default function BookingApprovalsPage() {
-  const fullName = localStorage.getItem('userName') || 'System Admin'
+
   const [requests, setRequests] = useState<BookingRequest[]>(initialRequests)
 
   const pendingCount = useMemo(() => requests.filter((item) => item.status === 'pending').length, [requests])
@@ -71,7 +71,7 @@ export default function BookingApprovalsPage() {
   }
 
   return (
-    <DashboardLayout role="admin" userName={fullName} userRole="System Admin">
+    <DashboardLayout>
       <div className="px-2 py-6 md:px-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-6">
           <div>

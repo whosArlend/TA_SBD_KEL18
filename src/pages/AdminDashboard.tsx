@@ -16,10 +16,8 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const fullName = localStorage.getItem('userName') || 'Alex Rivera';
-
   return (
-    <DashboardLayout role="admin" userName={fullName} userRole="System Admin">
+    <DashboardLayout>
       <div className="p-8 max-w-7xl mx-auto">
         
         {/* HEADER */}

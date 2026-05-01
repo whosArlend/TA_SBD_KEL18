@@ -30,12 +30,11 @@ const dummyRooms = [
 ];
 
 export default function RoomManagementPage() {
-  const fullName = localStorage.getItem('userName') || 'System Admin';
   const [rooms, setRooms] = useState(dummyRooms);
   const [addOpen, setAddOpen] = useState(false)
 
   return (
-    <DashboardLayout role="admin" userName={fullName} userRole="System Admin">
+    <DashboardLayout>
       <div className="px-2 py-6 md:px-8">
         <div className="flex justify-between items-center mb-6">
           <div>

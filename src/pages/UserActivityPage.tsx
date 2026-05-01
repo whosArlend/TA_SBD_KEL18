@@ -74,8 +74,6 @@ const notificationsData: Notification[] = [
 ];
 
 export default function UserActivityPage() {
-  const fullName = localStorage.getItem('userName') || 'User';
-  const role = (localStorage.getItem('role') as 'admin' | 'user') || 'user';
   
   const [activeTab, setActiveTab] = React.useState<TabType>('Semua');
 
@@ -118,7 +116,7 @@ export default function UserActivityPage() {
   };
 
   return (
-    <DashboardLayout role={role} userName={fullName} userRole="PROJECT LEAD">
+    <DashboardLayout>
       <div className="max-w-5xl">
         
         {/* HEADER */}

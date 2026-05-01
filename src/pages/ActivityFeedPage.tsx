@@ -89,7 +89,6 @@ const initialActivities: ActivityItem[] = [
 ];
 
 export default function ActivityFeedPage() {
-  const fullName = localStorage.getItem('userName') || 'Alex Rivera';
   
   // --- STATE MANAGEMENT ---
   const [activeTab, setActiveTab] = React.useState<ActivityTab>('all');
@@ -123,7 +122,7 @@ export default function ActivityFeedPage() {
   };
 
   return (
-    <DashboardLayout role="admin" userName={fullName} userRole="System Admin">
+    <DashboardLayout>
       <div className="p-8 max-w-7xl mx-auto">
         
         {/* HEADER SECTION */}

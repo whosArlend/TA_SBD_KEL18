@@ -5,21 +5,24 @@ import {
   Calendar, Archive, History, BookOpen, Bookmark, Building2, ClipboardList
 } from 'lucide-react';
 
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
-  role: 'admin' | 'user';
-  userName: string;
-  userRole: string;
 }
 
-export default function DashboardLayout({ children, role, userName, userRole }: LayoutProps) {
+export default function DashboardLayout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { fullName, role: authRole, signOut } = useAuth();
+
+  // Derive display values from AuthContext
+  const role = authRole === 'admin' ? 'admin' : 'user';
+  const userName = fullName ?? 'User';
+  const userRole = role === 'admin' ? 'System Admin' : 'User';
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate('/login');
   };
 

@@ -1,13 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layout/DashboardLayout';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function UserDashboard() {
-  const fullName = localStorage.getItem('userName') || 'User Baru';
-  const firstName = fullName.split(' ')[0];
+  const { fullName } = useAuth();
+  const firstName = (fullName ?? 'User').split(' ')[0];
   const navigate = useNavigate();
 
   return (
-    <DashboardLayout role="user" userName={fullName} userRole="PROJECT LEAD">
+    <DashboardLayout>
       {/* Welcome Banner */}
       <div className="bg-white rounded-xl p-8 border border-slate-200 mb-8 flex justify-between items-center bg-gradient-to-r from-white to-blue-50">
         <div>
