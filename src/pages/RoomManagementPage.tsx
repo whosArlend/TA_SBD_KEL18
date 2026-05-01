@@ -1,5 +1,6 @@
 import DashboardLayout from '../layout/DashboardLayout'
 import { useState } from 'react';
+import AddRoomModal from '../components/AddRoomModal'
 
 const dummyRooms = [
   {
@@ -30,7 +31,8 @@ const dummyRooms = [
 
 export default function RoomManagementPage() {
   const fullName = localStorage.getItem('userName') || 'System Admin';
-  const [rooms] = useState(dummyRooms);
+  const [rooms, setRooms] = useState(dummyRooms);
+  const [addOpen, setAddOpen] = useState(false)
 
   return (
     <DashboardLayout role="admin" userName={fullName} userRole="System Admin">
@@ -40,8 +42,32 @@ export default function RoomManagementPage() {
             <h1 className="text-3xl font-bold mb-1">Room Management</h1>
             <p className="text-slate-600">Configure and monitor all corporate meeting spaces.</p>
           </div>
-          <button className="bg-[#0088FF] text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition">+ Add New Room</button>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="bg-sky-800 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-sky-900 transition"
+          >
+            + Add New Room
+          </button>
         </div>
+
+        <AddRoomModal
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          onSave={(values) => {
+            setRooms((prev) => [
+              {
+                name: values.roomName,
+                location: values.location || '-',
+                capacity: values.capacity === '' ? 0 : values.capacity,
+                equipment: values.amenities.length ? values.amenities.slice(0, 3) : ['-'],
+                status: 'Available',
+                image:
+                  'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=facearea&w=96&h=64',
+              },
+              ...prev,
+            ])
+          }}
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -85,7 +111,7 @@ export default function RoomManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {rooms.map((room, idx) => (
+                {rooms.map((room) => (
                   <tr key={room.name} className="border-b last:border-b-0">
                     <td className="py-3 flex items-center gap-3">
                       <img src={room.image} alt={room.name} className="w-12 h-8 object-cover rounded" />
