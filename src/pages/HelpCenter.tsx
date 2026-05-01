@@ -153,7 +153,7 @@ export default function HelpCenter() {
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm mb-8">
         <div className="flex items-center gap-3 mb-6">
           <HelpCircle className="text-[#0088FF]" size={24} />
-          <h3 className="text-lg font-bold text-slate-800">Pertanyaan yang Sering Diajukan (FAQ)</h3>
+          <h3 className="text-lg font-bold text-slate-800">Frequently Asked Questions</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
