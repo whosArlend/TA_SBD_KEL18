@@ -11,6 +11,7 @@ export type AuthState = {
   fullName: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  authError: string | null
 }
 
 type AuthContextType = AuthState & {
@@ -34,7 +35,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: null,
     isAuthenticated: false,
     isLoading: true,
+    authError: null,
   })
+
+  function normalizeRole(raw: unknown): AppRole | null {
+    if (raw === 'admin') return 'admin'
+    if (raw === 'user') return 'user'
+    if (raw === 'mahasiswa' || raw === 'student') return 'user'
+    return null
+  }
 
   async function fetchProfile(userId: string) {
     const { data, error } = await supabase
@@ -49,14 +58,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return {
-      role: data.role as AppRole,
-      fullName: data.full_name as string,
+      role: normalizeRole(data.role),
+      fullName: typeof data.full_name === 'string' ? data.full_name : null,
     }
   }
 
+  const requestIdRef = React.useRef(0)
+
   async function handleSession(session: Session | null) {
+    const requestId = ++requestIdRef.current
     if (session?.user) {
       const profile = await fetchProfile(session.user.id)
+
+      if (requestId !== requestIdRef.current) return
+
+      // If profile can't be loaded, fail closed (safer than guessing a role).
+      if (!profile.role) {
+        setState({
+          session,
+          user: session.user,
+          role: null,
+          fullName: profile.fullName,
+          isAuthenticated: false,
+          isLoading: false,
+          authError:
+            'Akun belum memiliki profil atau akses diblokir (RLS). Hubungi admin.',
+        })
+        return
+      }
 
       setState({
         session,
@@ -65,8 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fullName: profile.fullName,
         isAuthenticated: true,
         isLoading: false,
+        authError: null,
       })
     } else {
+      if (requestId !== requestIdRef.current) return
       setState({
         session: null,
         user: null,
@@ -74,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fullName: null,
         isAuthenticated: false,
         isLoading: false,
+        authError: null,
       })
     }
   }
@@ -97,20 +129,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function signIn(email: string, password: string) {
+    setState((s) => ({ ...s, isLoading: true, authError: null }))
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
     if (error) {
+      setState((s) => ({ ...s, isLoading: false, authError: error.message }))
       return { error: error.message }
     }
 
+    const { data } = await supabase.auth.getSession()
+    await handleSession(data.session)
     return {}
   }
 
   async function signOut() {
     await supabase.auth.signOut()
+    requestIdRef.current++
     setState({
       session: null,
       user: null,
@@ -118,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       fullName: null,
       isAuthenticated: false,
       isLoading: false,
+      authError: null,
     })
   }
 

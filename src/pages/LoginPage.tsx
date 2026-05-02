@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import TextField from '../components/TextField'
-import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 type LoginKey = 'identifier' | 'password'
 type LoginState = Record<LoginKey, string>
@@ -79,6 +79,8 @@ export default function LoginPage() {
   const [apiError, setApiError] = React.useState<string | null>(null)
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const { signIn, role, isAuthenticated, authError } = useAuth()
 
   const errors = React.useMemo(() => validate(values), [values])
   const canSubmit = Object.keys(errors).length === 0
@@ -100,7 +102,6 @@ export default function LoginPage() {
 
     if (!canSubmit) return
 
-    setLoading(true)
     try {
       const identifier = values.identifier.trim()
       const isEmailInput = isEmail(identifier)
@@ -111,45 +112,41 @@ export default function LoginPage() {
         return
       }
 
-      // Sign in with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: identifier,
-        password: values.password,
-      })
-
-      if (authError) {
+      setLoading(true)
+      const { error } = await signIn(identifier, values.password)
+      if (error) {
         const msg =
-          authError.message === 'Invalid login credentials'
+          error === 'Invalid login credentials'
             ? 'Email atau password salah.'
-            : authError.message === 'Email not confirmed'
+            : error === 'Email not confirmed'
               ? 'Email belum diverifikasi. Cek inbox email kamu.'
-              : authError.message
+              : error
         setApiError(msg)
         return
       }
-
-      if (!authData.user) {
-        setApiError('Login gagal. Silakan coba lagi.')
-        return
-      }
-
-      // Fetch role from accounts table
-      const { data: profile } = await supabase
-        .from('accounts')
-        .select('role, full_name')
-        .eq('user_id', authData.user.id)
-        .single()
-
-      const role = profile?.role ?? 'mahasiswa'
-      const isAdmin = role === 'admin'
-
-      navigate(isAdmin ? '/admin-dashboard' : '/user-dashboard')
     } catch (err) {
       setApiError('Terjadi kesalahan jaringan. Silakan coba lagi.')
     } finally {
       setLoading(false)
     }
   }
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return
+    if (!role) return
+    const from = (location.state as any)?.from as string | undefined
+    if (from && from.startsWith('/')) {
+      navigate(from, { replace: true })
+      return
+    }
+    navigate(role === 'admin' ? '/admin-dashboard' : '/user-dashboard', {
+      replace: true,
+    })
+  }, [isAuthenticated, role, navigate, location.state])
+
+  React.useEffect(() => {
+    if (authError) setApiError(authError)
+  }, [authError])
 
   return (
     <div className="min-h-screen bg-white">

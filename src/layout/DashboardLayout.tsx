@@ -4,6 +4,7 @@ import {
   Search, Bell, HelpCircle, LogOut, LayoutDashboard, 
   Archive, History, BookOpen, Bookmark, Building2, ClipboardList
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext'
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,14 +15,15 @@ interface LayoutProps {
 export default function DashboardLayout({ children, role: propRole, userName: propName }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { role: authRole, fullName, signOut } = useAuth()
 
-  // FIX: Ambil dari prop halaman, jika tidak ada cek riwayat navigasi (state router), baru ke localStorage
-  const activeRole = propRole || location.state?.currentRole || (localStorage.getItem('role') as 'admin' | 'user') || 'user';
-  const activeUserName = propName || localStorage.getItem('userName') || 'User';
+  // Source of truth: AuthContext (fallback ke prop untuk kompatibilitas UI lama)
+  const activeRole = propRole || authRole || location.state?.currentRole || 'user';
+  const activeUserName = propName || fullName || 'User';
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+  const handleLogout = async () => {
+    await signOut()
+    navigate('/login', { replace: true });
   };
 
   const adminMenu = [
