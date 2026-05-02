@@ -5,55 +5,55 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function HelpCenter() {
   const { fullName: authName } = useAuth();
-  const displayName = authName ?? 'Mahasiswa';
+  const displayName = authName ?? 'Student';
 
-  // State untuk melacak FAQ mana yang sedang terbuka (null berarti tertutup semua)
+  // State to track which FAQ is open (null means all are closed)
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const toggleFaq = (index: number) => {
-    // Jika diklik FAQ yang sudah terbuka, maka tutup. Jika tertutup, maka buka.
+    // Toggle the clicked FAQ open/close
     setOpenFaq(openFaq === index ? null : index);
   };
 
   const steps = [
     {
       id: 1,
-      title: 'Pilih Ruangan di Katalog',
-      desc: 'Jelajahi berbagai pilihan ruangan yang tersedia sesuai dengan kebutuhan kapasitas dan fasilitas Anda di menu Room Catalog.',
+      title: 'Select a Room from the Catalog',
+      desc: 'Browse various available rooms according to your capacity and facility needs in the Room Catalog menu.',
     },
     {
       id: 2,
-      title: 'Klik Tombol Pinjam',
-      desc: "Setelah menemukan ruangan yang cocok, klik tombol 'Pinjam' atau 'Book Now' untuk memulai proses reservasi.",
+      title: 'Click the Book Button',
+      desc: "Once you find a suitable room, click the 'Book Now' button to start the reservation process.",
     },
     {
       id: 3,
-      title: 'Isi Detail Form',
-      desc: 'Lengkapi informasi yang diperlukan seperti tanggal, durasi, jumlah peserta, dan keperluan penggunaan ruangan.',
+      title: 'Fill in Form Details',
+      desc: 'Provide the necessary information such as date, duration, number of attendees, and the purpose of room usage.',
     },
     {
       id: 4,
-      title: 'Tunggu Persetujuan Admin',
-      desc: 'Tim admin akan meninjau pengajuan Anda. Status booking dapat dipantau secara real-time di menu My Bookings.',
+      title: 'Wait for Admin Approval',
+      desc: 'The admin team will review your request. You can monitor your booking status in real-time through the My Bookings menu.',
     },
   ];
 
   const faqs = [
     {
-      q: 'Berapa lama proses persetujuan booking?',
-      a: 'Proses persetujuan biasanya memakan waktu 15-60 menit selama jam operasional kantor. Anda akan menerima notifikasi email setelah status berubah.',
+      q: 'How long does the booking approval process take?',
+      a: 'The approval process usually takes 15-60 minutes during office hours. You will receive an email notification once the status changes.',
     },
     {
-      q: 'Bisakah saya membatalkan pesanan yang sudah disetujui?',
-      a: "Ya, pembatalan dapat dilakukan melalui menu 'My Bookings' maksimal 2 jam sebelum waktu peminjaman dimulai.",
+      q: 'Can I cancel an approved booking?',
+      a: "Yes, cancellations can be made through the 'My Bookings' menu up to 2 hours before the booking time starts.",
     },
     {
-      q: 'Apa yang harus dilakukan jika kunci ruangan belum tersedia?',
-      a: "Silakan hubungi staf operasional di meja resepsionis lantai terkait atau gunakan fitur 'Hubungi Admin' di halaman ini.",
+      q: 'What should I do if the room key is not yet available?',
+      a: "Please contact the operational staff at the respective floor's reception desk or use the 'Contact Admin' feature on this page.",
     },
     {
-      q: 'Apakah ada batas maksimal durasi peminjaman?',
-      a: 'Maksimal durasi peminjaman standar adalah 8 jam per hari. Untuk peminjaman lebih dari 1 hari, silakan ajukan permohonan khusus ke Admin.',
+      q: 'Is there a maximum limit for booking duration?',
+      a: 'The standard maximum booking duration is 8 hours per day. For bookings longer than 1 day, please submit a special request to the Admin.',
     },
   ];
 
@@ -61,18 +61,18 @@ export default function HelpCenter() {
     <DashboardLayout>
       {/* Header Section */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">Pusat Bantuan & Panduan</h2>
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">Help & Guide Center</h2>
         <p className="text-slate-500">
-          Temukan jawaban untuk pertanyaan Anda dan panduan penggunaan sistem TEKSPACE.
+          Find answers to your questions and guides on how to use the TEKSPACE system.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Left Column: Panduan Peminjaman */}
+        {/* Left Column: Booking Guide */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <BookOpen className="text-[#0088FF]" size={24} />
-            <h3 className="text-lg font-bold text-slate-800">Panduan Peminjaman Ruangan</h3>
+            <h3 className="text-lg font-bold text-slate-800">Room Booking Guide</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -88,37 +88,37 @@ export default function HelpCenter() {
           </div>
         </div>
 
-        {/* Right Column: Support & Jam Operasional */}
+        {/* Right Column: Support & Operational Hours */}
         <div className="flex flex-col gap-6">
           {/* Support Box */}
           <div className="bg-[#0077B6] rounded-xl p-6 text-white shadow-sm">
-            <h3 className="text-lg font-bold mb-3">Butuh Bantuan Lebih?</h3>
+            <h3 className="text-lg font-bold mb-3">Need More Help?</h3>
             <p className="text-white/80 text-sm mb-6 leading-relaxed">
-              Tim support kami siap membantu kendala teknis atau pertanyaan mendesak mengenai pemesanan ruangan Anda.
+              Our support team is ready to assist with technical issues or urgent questions regarding your room reservations.
             </p>
             
             <div className="space-y-3">
-              {/* Tombol WhatsApp Terintegrasi */}
+              {/* WhatsApp Button */}
               <button 
                 onClick={() => {
-                  const pesan = `Halo Admin TEKSPACE, saya ${displayName}. Saya butuh bantuan terkait reservasi ruangan kampus.`;
-                  // Ganti nomor di bawah dengan nomor WhatsApp admin yang asli (gunakan format 62)
-                  window.open(`https://wa.me/6287822408980?text=${encodeURIComponent(pesan)}`, '_blank');
+                  const message = `Hello TEKSPACE Admin, I am ${displayName}. I need assistance regarding a campus room reservation.`;
+                  // Replace the number below with the actual admin WhatsApp number (use international format without '+', e.g., 62...)
+                  window.open(`https://wa.me/6287822408980?text=${encodeURIComponent(message)}`, '_blank');
                 }}
                 className="w-full bg-white/20 hover:bg-white/30 transition border border-white/30 rounded-lg p-3 flex items-center gap-4 text-left"
               >
                 <MessageSquare size={20} className="text-white" />
                 <div>
                   <p className="text-[10px] font-bold text-white/70 tracking-wider uppercase">Live Chat (WhatsApp)</p>
-                  <p className="font-semibold text-sm">Hubungi Admin</p>
+                  <p className="font-semibold text-sm">Contact Admin</p>
                 </div>
               </button>
               
-              {/* Tombol Email Terintegrasi */}
+              {/* Email Button */}
               <button 
                 onClick={() => {
-                  const subject = `[TEKSPACE Support] Butuh Bantuan - ${displayName}`;
-                  const body = `Halo Tim Support TEKSPACE,%0D%0A%0D%0ASaya ${displayName} ingin bertanya mengenai...`;
+                  const subject = `[TEKSPACE Support] Need Assistance - ${displayName}`;
+                  const body = `Hello TEKSPACE Support Team,%0D%0A%0D%0AI am ${displayName} and I would like to ask about...`;
                   window.location.href = `mailto:support@spacereserve.com?subject=${subject}&body=${body}`;
                 }}
                 className="w-full bg-white/20 hover:bg-white/30 transition border border-white/30 rounded-lg p-3 flex items-center gap-4 text-left"
@@ -132,17 +132,17 @@ export default function HelpCenter() {
             </div>
           </div>
 
-          {/* Jam Operasional */}
+          {/* Operational Hours */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
             <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-4">
-              Jam Operasional Support
+              Operational Hours
             </h3>
             <div className="flex justify-between items-center py-2 border-b border-slate-100">
-              <span className="text-sm text-slate-700 font-medium">Senin - Jumat</span>
+              <span className="text-sm text-slate-700 font-medium">Monday - Friday</span>
               <span className="text-sm text-[#0088FF] font-bold">08:00 - 18:00</span>
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="text-sm text-slate-700 font-medium">Sabtu</span>
+              <span className="text-sm text-slate-700 font-medium">Saturday</span>
               <span className="text-sm text-slate-600 font-medium">09:00 - 13:00</span>
             </div>
           </div>
