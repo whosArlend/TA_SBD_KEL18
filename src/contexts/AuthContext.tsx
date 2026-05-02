@@ -14,6 +14,7 @@ export type AuthState = {
 }
 
 type AuthContextType = AuthState & {
+  signIn: (email: string, password: string) => Promise<{ error?: string }>
   signOut: () => Promise<void>
 }
 
@@ -35,34 +36,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   })
 
-  // Fetch the user's role & name from `accounts` table
   async function fetchProfile(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('accounts')
-        .select('role, full_name')
-        .eq('user_id', userId)
-        .single()
+    const { data, error } = await supabase
+      .from('accounts')
+      .select('role, full_name')
+      .eq('user_id', userId)
+      .single()
 
-      if (error || !data) {
-        console.warn('fetchProfile: no profile found or RLS blocked -', error?.message)
-        return { role: null as AppRole | null, fullName: null as string | null }
-      }
+    if (error || !data) {
+      console.warn('Profile not found / RLS blocked:', error?.message)
+      return { role: null, fullName: null }
+    }
 
-      return {
-        role: data.role as AppRole,
-        fullName: data.full_name as string,
-      }
-    } catch (err) {
-      console.error('fetchProfile: unexpected error', err)
-      return { role: null as AppRole | null, fullName: null as string | null }
+    return {
+      role: data.role as AppRole,
+      fullName: data.full_name as string,
     }
   }
 
-  // Helper to set authenticated state from a session
   async function handleSession(session: Session | null) {
     if (session?.user) {
       const profile = await fetchProfile(session.user.id)
+
       setState({
         session,
         user: session.user,
@@ -86,25 +81,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     let ignore = false
 
-    // 1. Get the current session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!ignore) handleSession(session)
-    }).catch(() => {
-      if (!ignore) setState((s) => ({ ...s, isLoading: false }))
     })
 
-    // 2. Listen for auth state changes (login, logout, token refresh)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!ignore) handleSession(session)
-    })
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange((_event, session) => {
+        if (!ignore) handleSession(session)
+      })
 
     return () => {
       ignore = true
       subscription.unsubscribe()
     }
   }, [])
+
+  async function signIn(email: string, password: string) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    return {}
+  }
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -119,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ ...state, signOut }}>
+    <AuthContext.Provider value={{ ...state, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   )
