@@ -130,10 +130,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
             </button>
 
             <div className="flex items-center gap-3 border-l pl-6 border-slate-200">
-              <div className="text-right">
-                <p className="text-sm font-bold text-slate-800">{userName}</p>
-                <p className="text-[11px] text-slate-500">{userRole}</p>
-              </div>
+              <span className="text-sm font-bold text-slate-800">{userName}</span>
               <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-200">
                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="avatar" />
               </div>
