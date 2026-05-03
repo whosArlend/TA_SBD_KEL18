@@ -310,7 +310,7 @@ export default function AddRoomModal({ open, onClose, onSave }: AddRoomModalProp
                         onBlur={() => setTouched((t) => ({ ...t, capacity: true }))}
                         type="number"
                         min={1}
-                        placeholder="12"
+                        placeholder="18"
                         className={cx(
                           'h-11 w-full rounded-lg border bg-white px-4 pr-10 text-sm text-slate-900 shadow-sm',
                           'placeholder:text-slate-400',
