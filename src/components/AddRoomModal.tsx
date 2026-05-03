@@ -402,7 +402,7 @@ export default function AddRoomModal({ open, onClose, onSave }: AddRoomModalProp
                         <path d="M12 5v14M5 12h14" />
                       </svg>
                     </span>
-                    + Add Room Rules
+                    Add Room Rules
                   </button>
                 </div>
               </div>
