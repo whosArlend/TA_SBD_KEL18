@@ -64,7 +64,7 @@ export default function HelpCenter() {
 
   return (
     <DashboardLayout role={role} userName={displayName}>
-      <div className="mb-8">
+      <div className="ml-4 mb-4 mt-4">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">Help & Guide Center</h2>
         <p className="text-slate-500">
           Find answers to your questions and guides on how to use the TEKSPACE system.
