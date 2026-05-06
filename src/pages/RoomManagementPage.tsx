@@ -10,12 +10,21 @@ export default function RoomManagementPage() {
   const auth = useAuth() as any;
   const adminName = auth?.fullName || localStorage.getItem('userName') || 'System Admin';
 
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [allRooms, setAllRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<Room | null>(null);
   const [archiveReason, setArchiveReason] = useState('');
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
+
+  // Tabel: hanya tampilkan yang belum diarsipkan
+  const rooms = allRooms.filter((r) => r.archived_at === null);
+
+  // Stats: hitung dari semua ruangan (termasuk archived)
+  const totalRooms = rooms.length;
+  const availableRooms = rooms.filter((r) => r.status === 'Available').length;
+  const maintenanceRooms = allRooms.filter((r) => r.status === 'Maintenance').length;
+  const availability = totalRooms > 0 ? Math.round((availableRooms / totalRooms) * 100) : 0;
 
   useEffect(() => { fetchRooms(); }, []);
 
@@ -23,7 +32,7 @@ export default function RoomManagementPage() {
     setIsLoading(true);
     try {
       const data = await api.getRooms();
-      setRooms(data.filter((r) => r.archived_at === null));
+      setAllRooms(data);
     } catch (err: any) {
       console.error('Error fetching rooms:', err.message);
     } finally {
@@ -51,7 +60,7 @@ export default function RoomManagementPage() {
     setActionLoading(room.room_id);
     try {
       await api.deleteRoom(room.room_id);
-      fetchRooms();
+      setAllRooms((prev) => prev.filter((r) => r.room_id !== room.room_id));
     } catch (err: any) {
       alert('Gagal menghapus: ' + err.message);
     } finally {
@@ -67,18 +76,22 @@ export default function RoomManagementPage() {
     setActionLoading(archiveTarget.room_id);
     try {
       await api.archiveRoom(archiveTarget.room_id, archiveReason.trim());
+      // Update lokal: tandai sebagai archived + Maintenance (tidak perlu refetch)
+      setAllRooms((prev) =>
+        prev.map((r) =>
+          r.room_id === archiveTarget.room_id
+            ? { ...r, status: 'Maintenance' as const, archived_at: new Date().toISOString(), archive_reason: archiveReason.trim() }
+            : r
+        )
+      );
       setArchiveTarget(null);
       setArchiveReason('');
-      fetchRooms();
     } catch (err: any) {
       alert('Gagal mengarsipkan: ' + err.message);
     } finally {
       setActionLoading(null);
     }
   };
-
-  const activeRooms = rooms.filter((r) => r.status === 'Available').length;
-  const maintenanceRooms = rooms.filter((r) => r.status === 'Maintenance').length;
 
   return (
     <DashboardLayout role="admin" userName={adminName}>
@@ -112,7 +125,9 @@ export default function RoomManagementPage() {
               />
               <div className="flex gap-3 mt-5">
                 <button onClick={() => { setArchiveTarget(null); setArchiveReason(''); }} className="flex-1 border border-slate-300 rounded-lg py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
-                <button onClick={handleArchiveSubmit} className="flex-1 bg-amber-500 text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-amber-600">Archive</button>
+                <button onClick={handleArchiveSubmit} disabled={actionLoading !== null} className="flex-1 bg-amber-500 text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-amber-600 disabled:opacity-50">
+                  {actionLoading !== null ? 'Memproses...' : 'Archive'}
+                </button>
               </div>
             </div>
           </div>
@@ -121,10 +136,10 @@ export default function RoomManagementPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           {[
-            { label: 'TOTAL ROOMS', value: rooms.length, color: 'text-sky-700' },
-            { label: 'AVAILABLE', value: activeRooms, color: 'text-emerald-600' },
+            { label: 'TOTAL ROOMS', value: totalRooms, color: 'text-sky-700' },
+            { label: 'AVAILABLE', value: availableRooms, color: 'text-emerald-600' },
             { label: 'MAINTENANCE', value: maintenanceRooms, color: 'text-amber-600' },
-            { label: 'AVAILABILITY', value: `${rooms.length > 0 ? Math.round((activeRooms / rooms.length) * 100) : 0}%`, color: 'text-blue-600' },
+            { label: 'AVAILABILITY', value: `${availability}%`, color: 'text-blue-600' },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-xl p-6 border border-slate-200 flex flex-col items-center shadow-sm">
               <div className={`text-3xl font-bold ${s.color} mb-1`}>{s.value}</div>

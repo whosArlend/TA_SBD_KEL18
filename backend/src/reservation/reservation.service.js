@@ -1,4 +1,5 @@
 import * as reservationRepo from './reservation.repository.js';
+import * as roomRepo from '../rooms/room.repository.js';
 
 const VALID_STATUSES = ['Pending', 'Approved', 'Rejected', 'Cancelled'];
 
@@ -96,7 +97,7 @@ export const editReservation = async (reservationId, reservationData) => {
 };
 
 export const updateReservationStatus = async (reservationId, { status, notes_from_admin }) => {
-    await getReservationById(reservationId);
+    const reservation = await getReservationById(reservationId);
 
     if (!status) throw new Error('status is required');
     if (!VALID_STATUSES.includes(status)) {
@@ -108,7 +109,16 @@ export const updateReservationStatus = async (reservationId, { status, notes_fro
         payload.notes_from_admin = notes_from_admin;
     }
 
-    return await reservationRepo.updateReservation(reservationId, payload);
+    const updated = await reservationRepo.updateReservation(reservationId, payload);
+
+    // Update status ruangan sesuai hasil keputusan reservasi
+    if (status === 'Approved') {
+        await roomRepo.updateRoom(reservation.room_id, { status: 'Occupied' });
+    } else if (status === 'Rejected') {
+        await roomRepo.updateRoom(reservation.room_id, { status: 'Available' });
+    }
+
+    return updated;
 };
 
 export const cancelReservation = async (reservationId) => {
@@ -119,7 +129,9 @@ export const cancelReservation = async (reservationId) => {
         throw new Error(`Cannot cancel a reservation with status '${existing.status}'`);
     }
 
-    return await reservationRepo.updateReservation(reservationId, { status: 'Cancelled' });
+    const cancelled = await reservationRepo.updateReservation(reservationId, { status: 'Cancelled' });
+    await roomRepo.updateRoom(existing.room_id, { status: 'Available' });
+    return cancelled;
 };
 
 export const removeReservation = async (reservationId) => {
