@@ -223,8 +223,8 @@ export default function RegisterPage() {
                 autoComplete="off"
                 inputMode="numeric"
                 required
-                status={fieldStatus('nid', touched, errors, values, checkingNim)}
-                message={touched.nid ? errors.nid : checkingNim ? 'Mengecek ketersediaan...' : undefined}
+                status={fieldStatus('nid', touched, errors, values)}
+                message={touched.nid ? errors.nid : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
