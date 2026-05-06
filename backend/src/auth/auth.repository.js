@@ -36,7 +36,7 @@ export const emailExists = async (email) => {
 export const createUser = async ({ full_name, email, password_hash, department }) => {
     const { data, error } = await supabase
         .from('users')
-        .insert([{ full_name, email, password_hash, role: 'mahasiswa', department }])
+        .insert([{ full_name, email, password_hash, role: 'User', department }])
         .select('user_id, email, role, full_name, department')
         .single();
 

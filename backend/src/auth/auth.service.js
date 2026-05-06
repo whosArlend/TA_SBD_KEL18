@@ -9,7 +9,7 @@ function normalizeRole(raw) {
     if (!raw) return 'user';
     const r = raw.toLowerCase();
     if (r === 'admin' || r === 'system admin') return 'admin';
-    return 'user'; // mahasiswa, dosen, student, dll → user
+    return 'user'; // "User", mahasiswa, dll → user
 }
 
 function signToken(user) {
