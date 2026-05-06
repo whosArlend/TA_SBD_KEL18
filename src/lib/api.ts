@@ -12,6 +12,15 @@ export type AuthUser = {
   department: string | null;
 };
 
+export type RoomAmenity = {
+  quantity: number;
+  amenities: { amenity_id: number; amenity_name: string };
+};
+
+export type RoomRule = {
+  rules: { rule_id: number; rule_name: string };
+};
+
 export type Room = {
   room_id: number;
   room_name: string;
@@ -24,6 +33,8 @@ export type Room = {
   archive_reason: string | null;
   deleted_at: string | null;
   created_at: string;
+  room_amenities_map?: RoomAmenity[];
+  room_rules_map?: RoomRule[];
 };
 
 export type ReservationUser = {

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Loader2, Users, Search, X } from 'lucide-react';
+import { Loader2, Users, Search, X, Info } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Room } from '../lib/api';
+import RoomDetailModal from '../components/RoomDetailModal';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80';
 const roomImg = (room: import('../lib/api').Room) => room.image_url || FALLBACK_IMG;
@@ -104,6 +105,7 @@ export default function RoomCatalogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [bookingRoom, setBookingRoom] = useState<Room | null>(null);
+  const [detailRoomId, setDetailRoomId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -148,6 +150,18 @@ export default function RoomCatalogPage() {
           <BookRoomModal room={bookingRoom} userId={userId} onClose={() => setBookingRoom(null)} />
         )}
 
+        {detailRoomId !== null && (
+          <RoomDetailModal
+            roomId={detailRoomId}
+            onClose={() => setDetailRoomId(null)}
+            onBook={() => {
+              const room = rooms.find((r) => r.room_id === detailRoomId) ?? null;
+              setDetailRoomId(null);
+              setBookingRoom(room);
+            }}
+          />
+        )}
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <Loader2 className="w-8 h-8 animate-spin mb-4 text-[#0088FF]" />
@@ -171,13 +185,21 @@ export default function RoomCatalogPage() {
                   <div className="flex items-center gap-4 text-sm text-slate-600 mb-6">
                     <span className="flex items-center gap-1.5"><Users size={16} className="text-slate-400" /> {room.capacity} Orang</span>
                   </div>
-                  <button
-                    onClick={() => setBookingRoom(room)}
-                    className="mt-auto w-full bg-[#0088FF] text-white font-semibold py-2.5 rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={room.status !== 'Available'}
-                  >
-                    {room.status === 'Available' ? 'Book Now' : 'Tidak Tersedia'}
-                  </button>
+                  <div className="mt-auto flex gap-2">
+                    <button
+                      onClick={() => setDetailRoomId(room.room_id)}
+                      className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition"
+                    >
+                      <Info size={15} /> Detail
+                    </button>
+                    <button
+                      onClick={() => setBookingRoom(room)}
+                      className="flex-1 bg-[#0088FF] text-white font-semibold py-2.5 rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={room.status !== 'Available'}
+                    >
+                      {room.status === 'Available' ? 'Book Now' : 'Tidak Tersedia'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )) : (

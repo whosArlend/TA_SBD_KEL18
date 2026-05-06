@@ -23,13 +23,22 @@ export const findAllRooms = async () => {
 export const findRoomById = async (roomId) => {
     const { data, error } = await supabase
         .from('rooms')
-        .select('*')
+        .select(`
+            *,
+            room_amenities_map (
+                quantity,
+                amenities ( amenity_id, amenity_name )
+            ),
+            room_rules_map (
+                rules ( rule_id, rule_name )
+            )
+        `)
         .eq('room_id', roomId)
         .is('deleted_at', null)
         .single();
 
     if (error) {
-        if (error.code === 'PGRST116') return null; // PostgREST code for "not found"
+        if (error.code === 'PGRST116') return null;
         console.error('Supabase Error (findRoomById):', error);
         throw error;
     }
