@@ -6,6 +6,7 @@ import EditRoomModal from '../components/EditRoomModal';
 import { Loader2, Trash2, Archive, Pencil } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Room } from '../lib/api';
+import type { AddRoomValues } from '../components/AddRoomModal';
 
 export default function RoomManagementPage() {
   const auth = useAuth() as any;
@@ -42,9 +43,9 @@ export default function RoomManagementPage() {
     }
   };
 
-  const handleAddRoom = async (values: any) => {
+  const handleAddRoom = async (values: AddRoomValues) => {
     try {
-      await api.createRoom({
+      const room = await api.createRoom({
         room_name: values.roomName,
         room_type: values.roomType,
         location: values.location || '-',
@@ -52,6 +53,11 @@ export default function RoomManagementPage() {
         status: 'Available',
         image_url: values.imageUrl || null,
       });
+      // Simpan amenities & rules ke mapping table
+      await Promise.all([
+        api.updateRoomAmenities(room.room_id, values.selectedAmenities),
+        api.updateRoomRules(room.room_id, values.selectedRuleIds),
+      ]);
       fetchRooms();
     } catch (err: any) {
       alert('Gagal menambahkan ruangan: ' + err.message);
