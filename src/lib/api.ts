@@ -59,7 +59,7 @@ export type Reservation = {
   room_id: number;
   start_time: string;
   end_time: string;
-  status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled' | 'Return Requested' | 'Completed';
   meeting_title: string | null;
   person_in_charge: string | null;
   notes_from_admin: string | null;
@@ -232,6 +232,18 @@ export const updateReservationStatus = (
 
 export const cancelReservation = (id: number | string) =>
   apiFetch<Reservation>(`/reservations/${id}/cancel`, { method: 'PATCH' });
+
+export const requestReturn = (id: number | string) =>
+  apiFetch<Reservation>(`/reservations/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'Return Requested' }),
+  });
+
+export const approveReturn = (id: number | string) =>
+  apiFetch<Reservation>(`/reservations/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'Completed' }),
+  });
 
 export const deleteReservation = (id: number | string) =>
   apiFetch<void>(`/reservations/${id}`, { method: 'DELETE' });

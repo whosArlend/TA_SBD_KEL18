@@ -1,7 +1,7 @@
 import * as reservationRepo from './reservation.repository.js';
 import * as roomRepo from '../rooms/room.repository.js';
 
-const VALID_STATUSES = ['Pending', 'Approved', 'Rejected', 'Cancelled'];
+const VALID_STATUSES = ['Pending', 'Approved', 'Rejected', 'Cancelled', 'Return Requested', 'Completed'];
 
 const generateBookingCode = () => {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -115,6 +115,8 @@ export const updateReservationStatus = async (reservationId, { status, notes_fro
     if (status === 'Approved') {
         await roomRepo.updateRoom(reservation.room_id, { status: 'Occupied' });
     } else if (status === 'Rejected') {
+        await roomRepo.updateRoom(reservation.room_id, { status: 'Available' });
+    } else if (status === 'Completed') {
         await roomRepo.updateRoom(reservation.room_id, { status: 'Available' });
     }
 
