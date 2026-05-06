@@ -5,12 +5,19 @@ import * as authRepo from './auth.repository.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'tekspace-secret-fallback';
 const JWT_EXPIRES_IN = '7d';
 
+function normalizeRole(raw) {
+    if (!raw) return 'user';
+    const r = raw.toLowerCase();
+    if (r === 'admin' || r === 'system admin') return 'admin';
+    return 'user'; // mahasiswa, dosen, student, dll → user
+}
+
 function signToken(user) {
     return jwt.sign(
         {
             user_id: user.user_id,
             email: user.email,
-            role: user.role,
+            role: normalizeRole(user.role),
             full_name: user.full_name,
             department: user.department ?? null,
         },
@@ -28,7 +35,7 @@ export const login = async (email, password) => {
 
     const token = signToken(user);
     const { password_hash, ...safeUser } = user;
-    return { token, user: safeUser };
+    return { token, user: { ...safeUser, role: normalizeRole(user.role) } };
 };
 
 export const register = async ({ full_name, email, password, department }) => {
@@ -43,5 +50,5 @@ export const register = async ({ full_name, email, password, department }) => {
     const user = await authRepo.createUser({ full_name, email, password_hash, department });
 
     const token = signToken(user);
-    return { token, user };
+    return { token, user: { ...user, role: normalizeRole(user.role) } };
 };
