@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase.js';
+import { supabaseAdmin } from '../lib/supabase-admin.js';
 
 const BUCKET = 'room-images';
 
@@ -16,7 +16,7 @@ export const uploadRoomImage = async (req, res) => {
     const ext = file.originalname.split('.').pop()?.toLowerCase() ?? 'jpg';
     const filename = `room-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseAdmin.storage
         .from(BUCKET)
         .upload(filename, file.buffer, {
             contentType: file.mimetype,
@@ -28,7 +28,7 @@ export const uploadRoomImage = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 
-    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(data.path);
+    const { data: urlData } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(data.path);
 
     return res.status(200).json({
         success: true,
