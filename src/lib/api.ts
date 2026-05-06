@@ -59,7 +59,7 @@ export type Reservation = {
   room_id: number;
   start_time: string;
   end_time: string;
-  status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled' | 'Return Requested' | 'Completed';
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Canceled' | 'Return Requested' | 'Completed';
   meeting_title: string | null;
   person_in_charge: string | null;
   notes_from_admin: string | null;

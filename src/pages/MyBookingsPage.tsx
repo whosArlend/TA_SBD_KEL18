@@ -15,7 +15,7 @@ function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     Approved:          'bg-emerald-50 text-emerald-700 border-emerald-200',
     Rejected:          'bg-rose-50 text-rose-700 border-rose-200',
-    Cancelled:         'bg-slate-100 text-slate-500 border-slate-200',
+    Canceled:         'bg-slate-100 text-slate-500 border-slate-200',
     Completed:         'bg-blue-50 text-blue-700 border-blue-200',
     'Return Requested': 'bg-purple-50 text-purple-700 border-purple-200',
   };
@@ -57,7 +57,7 @@ export default function MyBookingsPage() {
     try {
       await api.cancelReservation(id);
       setMyBookings((prev) =>
-        prev.map((b) => b.reservation_id === id ? { ...b, status: 'Cancelled' } : b)
+        prev.map((b) => b.reservation_id === id ? { ...b, status: 'Canceled' } : b)
       );
     } catch (err: any) {
       alert('Gagal membatalkan: ' + err.message);

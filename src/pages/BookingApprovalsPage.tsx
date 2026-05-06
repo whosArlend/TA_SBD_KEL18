@@ -30,17 +30,18 @@ export default function BookingApprovalsPage() {
   const fetchAll = async () => {
     setIsLoading(true);
     try {
-      const [pending, returning] = await Promise.all([
-        api.getReservations({ status: 'Pending' }),
-        api.getReservations({ status: 'Return Requested' }),
-      ]);
+      const pending = await api.getReservations({ status: 'Pending' });
       setPendingList(pending);
+    } catch (err: any) {
+      console.error('Error fetching pending:', err.message);
+    }
+    try {
+      const returning = await api.getReservations({ status: 'Return Requested' });
       setReturnList(returning);
     } catch (err: any) {
-      console.error('Error fetching reservations:', err.message);
-    } finally {
-      setIsLoading(false);
+      console.error('Error fetching returns:', err.message);
     }
+    setIsLoading(false);
   };
 
   const handleUpdateStatus = async (id: number, status: 'Approved' | 'Rejected', userName: string) => {

@@ -22,7 +22,7 @@ function getStyles(status: string) {
     iconBg: 'bg-rose-100',
     badgeBg: 'bg-rose-100 text-rose-700',
   };
-  if (status === 'Cancelled') return {
+  if (status === 'Canceled') return {
     icon: <XCircle className="w-6 h-6 text-orange-600" />,
     iconBg: 'bg-orange-100',
     badgeBg: 'bg-orange-100 text-orange-700',
@@ -38,7 +38,7 @@ function getStyles(status: string) {
 export default function UserActivityPage() {
   const auth = useAuth() as any;
   const userName = auth?.fullName || localStorage.getItem('userName') || 'User';
-  const userId = auth?.user?.id as string | undefined;
+  const userId = auth?.user?.user_id as number | undefined;
 
   const [activities, setActivities] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,12 +79,12 @@ export default function UserActivityPage() {
             const title =
               res.status === 'Approved' ? `Booking Disetujui – ${roomName}` :
               res.status === 'Rejected' ? `Booking Ditolak – ${roomName}` :
-              res.status === 'Cancelled' ? `Booking Dibatalkan – ${roomName}` :
+              res.status === 'Canceled' ? `Booking Dibatalkan – ${roomName}` :
               `Menunggu Persetujuan – ${roomName}`;
             const desc =
               res.status === 'Approved' ? `Reservasi ruangan ${roomName} telah disetujui oleh admin.` :
               res.status === 'Rejected' ? `Reservasi ruangan ${roomName} ditolak. ${res.notes_from_admin ? 'Catatan admin: ' + res.notes_from_admin : ''}` :
-              res.status === 'Cancelled' ? `Reservasi ruangan ${roomName} telah dibatalkan.` :
+              res.status === 'Canceled' ? `Reservasi ruangan ${roomName} telah dibatalkan.` :
               `Permintaan booking ruangan ${roomName} sedang menunggu persetujuan admin.`;
             return (
               <div key={res.reservation_id} className="bg-white border border-slate-200 rounded-xl p-5 flex gap-4 shadow-sm hover:shadow-md transition-shadow">

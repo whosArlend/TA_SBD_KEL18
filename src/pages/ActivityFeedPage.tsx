@@ -8,7 +8,7 @@ import type { Reservation } from '../lib/api';
 function getIconData(status: string) {
   switch (status) {
     case 'Approved': return { icon: <CalendarPlus className="w-6 h-6 text-sky-600" />, bg: 'bg-sky-50 border-sky-100' };
-    case 'Cancelled': return { icon: <XCircle className="w-6 h-6 text-rose-600" />, bg: 'bg-rose-50 border-rose-100' };
+    case 'Canceled': return { icon: <XCircle className="w-6 h-6 text-rose-600" />, bg: 'bg-rose-50 border-rose-100' };
     case 'Rejected': return { icon: <XCircle className="w-6 h-6 text-orange-600" />, bg: 'bg-orange-50 border-orange-100' };
     default: return { icon: <RotateCw className="w-6 h-6 text-amber-600" />, bg: 'bg-amber-50 border-amber-100' };
   }
@@ -70,7 +70,7 @@ export default function ActivityFeedPage() {
             const actionText =
               res.status === 'Approved' ? `booking ruangan ${roomName} disetujui.` :
               res.status === 'Rejected' ? `booking ruangan ${roomName} ditolak.` :
-              res.status === 'Cancelled' ? `membatalkan booking ruangan ${roomName}.` :
+              res.status === 'Canceled' ? `membatalkan booking ruangan ${roomName}.` :
               `mengajukan booking ruangan ${roomName} — menunggu persetujuan.`;
             return (
               <div key={res.reservation_id}

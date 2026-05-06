@@ -1,7 +1,7 @@
 import * as reservationRepo from './reservation.repository.js';
 import * as roomRepo from '../rooms/room.repository.js';
 
-const VALID_STATUSES = ['Pending', 'Approved', 'Rejected', 'Cancelled', 'Return Requested', 'Completed'];
+const VALID_STATUSES = ['Pending', 'Approved', 'Rejected', 'Canceled', 'Return Requested', 'Completed'];
 
 const generateBookingCode = () => {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -131,7 +131,7 @@ export const cancelReservation = async (reservationId) => {
         throw new Error(`Cannot cancel a reservation with status '${existing.status}'`);
     }
 
-    const cancelled = await reservationRepo.updateReservation(reservationId, { status: 'Cancelled' });
+    const cancelled = await reservationRepo.updateReservation(reservationId, { status: 'Canceled' });
     await roomRepo.updateRoom(existing.room_id, { status: 'Available' });
     return cancelled;
 };
