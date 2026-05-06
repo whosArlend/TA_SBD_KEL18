@@ -27,7 +27,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function MyBookingsPage() {
   const auth = useAuth() as any;
   const userName = auth?.fullName || localStorage.getItem('userName') || 'User';
-  const userId = auth?.user?.id as string | undefined;
+  const userId = auth?.dbUserId as number | undefined;
 
   const [myBookings, setMyBookings] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);

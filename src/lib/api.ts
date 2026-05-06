@@ -49,8 +49,8 @@ export type Reservation = {
 
 export type ReservationFilters = {
   status?: string;
-  user_id?: string;
-  room_id?: string;
+  user_id?: number | string;
+  room_id?: number | string;
 };
 
 // ─── Internal fetch helper ────────────────────────────────────────────────────
@@ -100,9 +100,9 @@ export const unarchiveRoom = (id: string) =>
 
 export const getReservations = (filters?: ReservationFilters) => {
   const params = new URLSearchParams();
-  if (filters?.status) params.set('status', filters.status);
-  if (filters?.user_id) params.set('user_id', filters.user_id);
-  if (filters?.room_id) params.set('room_id', filters.room_id);
+  if (filters?.status) params.set('status', String(filters.status));
+  if (filters?.user_id != null) params.set('user_id', String(filters.user_id));
+  if (filters?.room_id != null) params.set('room_id', String(filters.room_id));
   const qs = params.toString() ? `?${params}` : '';
   return apiFetch<Reservation[]>(`/reservations${qs}`);
 };
@@ -111,8 +111,8 @@ export const getReservationById = (id: string) =>
   apiFetch<Reservation>(`/reservations/${id}`);
 
 export const createReservation = (data: {
-  user_id: string;
-  room_id: string;
+  user_id: number;
+  room_id: number | string;
   start_time: string;
   end_time: string;
   meeting_title: string;

@@ -9,6 +9,7 @@ export type AuthState = {
   user: User | null
   role: AppRole | null
   fullName: string | null
+  dbUserId: number | null
   isAuthenticated: boolean
   isLoading: boolean
   authError: string | null
@@ -27,41 +28,46 @@ export function useAuth(): AuthContextType {
   return ctx
 }
 
+const INITIAL_STATE: AuthState = {
+  session: null,
+  user: null,
+  role: null,
+  fullName: null,
+  dbUserId: null,
+  isAuthenticated: false,
+  isLoading: true,
+  authError: null,
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = React.useState<AuthState>({
-    session: null,
-    user: null,
-    role: null,
-    fullName: null,
-    isAuthenticated: false,
-    isLoading: true,
-    authError: null,
-  })
+  const [state, setState] = React.useState<AuthState>(INITIAL_STATE)
 
   function normalizeRole(raw: unknown): AppRole | null {
     if (typeof raw !== 'string') return null
     const normalized = raw.toLowerCase()
-    
     if (normalized === 'admin' || normalized === 'system admin') return 'admin'
     if (normalized === 'user' || normalized === 'mahasiswa' || normalized === 'student') return 'user'
     return null
   }
 
-  async function fetchProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('accounts')
-      .select('role, full_name')
-      .eq('user_id', userId)
-      .single()
+  async function fetchProfile(userId: string, email: string) {
+    const [accountResult, userResult] = await Promise.all([
+      supabase.from('accounts').select('role, full_name').eq('user_id', userId).single(),
+      supabase.from('users').select('user_id').eq('email', email).maybeSingle(),
+    ])
 
-    if (error || !data) {
-      console.warn('Profile not found / RLS blocked:', error?.message)
-      return { role: null, fullName: null }
+    const { data: accountData, error: accountError } = accountResult
+    const { data: userData } = userResult
+
+    if (accountError || !accountData) {
+      console.warn('Profile not found / RLS blocked:', accountError?.message)
+      return { role: null, fullName: null, dbUserId: null }
     }
 
     return {
-      role: normalizeRole(data.role),
-      fullName: typeof data.full_name === 'string' ? data.full_name : null,
+      role: normalizeRole(accountData.role),
+      fullName: typeof accountData.full_name === 'string' ? accountData.full_name : null,
+      dbUserId: (userData?.user_id as number) ?? null,
     }
   }
 
@@ -70,21 +76,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function handleSession(session: Session | null) {
     const requestId = ++requestIdRef.current
     if (session?.user) {
-      const profile = await fetchProfile(session.user.id)
+      const profile = await fetchProfile(session.user.id, session.user.email ?? '')
 
       if (requestId !== requestIdRef.current) return
 
-      // If profile can't be loaded, fail closed (safer than guessing a role).
       if (!profile.role) {
         setState({
           session,
           user: session.user,
           role: null,
           fullName: profile.fullName,
+          dbUserId: null,
           isAuthenticated: false,
           isLoading: false,
-          authError:
-            'Akun belum memiliki profil atau akses diblokir (RLS). Hubungi admin.',
+          authError: 'Akun belum memiliki profil atau akses diblokir (RLS). Hubungi admin.',
         })
         return
       }
@@ -94,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user: session.user,
         role: profile.role,
         fullName: profile.fullName,
+        dbUserId: profile.dbUserId,
         isAuthenticated: true,
         isLoading: false,
         authError: null,
@@ -105,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user: null,
         role: null,
         fullName: null,
+        dbUserId: null,
         isAuthenticated: false,
         isLoading: false,
         authError: null,
@@ -132,10 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signIn(email: string, password: string) {
     setState((s) => ({ ...s, isLoading: true, authError: null }))
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setState((s) => ({ ...s, isLoading: false, authError: error.message }))
@@ -155,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: null,
       role: null,
       fullName: null,
+      dbUserId: null,
       isAuthenticated: false,
       isLoading: false,
       authError: null,

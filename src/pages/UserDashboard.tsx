@@ -8,7 +8,7 @@ import * as api from '../lib/api';
 export default function UserDashboard() {
   const auth = useAuth() as any;
   const userName = auth?.fullName || localStorage.getItem('userName') || 'User';
-  const userId = auth?.user?.id as string | undefined;
+  const userId = auth?.dbUserId as number | undefined;
   const firstName = userName.split(' ')[0];
   const navigate = useNavigate();
 

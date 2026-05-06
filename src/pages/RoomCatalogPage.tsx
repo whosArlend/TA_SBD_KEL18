@@ -7,7 +7,7 @@ import type { Room } from '../lib/api';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80';
 
-function BookRoomModal({ room, userId, onClose }: { room: Room; userId: string; onClose: () => void }) {
+function BookRoomModal({ room, userId, onClose }: { room: Room; userId: number; onClose: () => void }) {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [meetingTitle, setMeetingTitle] = useState('');
@@ -96,7 +96,7 @@ function BookRoomModal({ room, userId, onClose }: { room: Room; userId: string; 
 export default function RoomCatalogPage() {
   const auth = useAuth() as any;
   const userName = auth?.fullName || localStorage.getItem('userName') || 'User';
-  const userId = auth?.user?.id as string;
+  const userId = auth?.dbUserId as number | undefined;
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
