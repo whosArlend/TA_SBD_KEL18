@@ -18,6 +18,7 @@ export type Room = {
   room_type: string | null;
   location: string | null;
   capacity: number;
+  image_url: string | null;
   status: 'Available' | 'Occupied' | 'Maintenance';
   archived_at: string | null;
   archive_reason: string | null;
@@ -84,6 +85,22 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return json.data as T;
 }
 
+// ─── Upload ───────────────────────────────────────────────────────────────────
+
+export const uploadRoomImage = async (file: File): Promise<string> => {
+  const token = localStorage.getItem('token');
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await fetch(`${API_BASE}/upload/room-image`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error(json.message ?? 'Upload gagal');
+  return json.data.url as string;
+};
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export const loginApi = (email: string, password: string) =>
@@ -115,6 +132,7 @@ export const createRoom = (data: {
   location?: string;
   capacity?: number;
   status?: string;
+  image_url?: string | null;
 }) => apiFetch<Room>('/rooms', { method: 'POST', body: JSON.stringify(data) });
 
 export const updateRoom = (id: number | string, data: Partial<Room>) =>

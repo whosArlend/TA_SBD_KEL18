@@ -6,6 +6,7 @@ import * as api from '../lib/api';
 import type { Room } from '../lib/api';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80';
+const roomImg = (room: import('../lib/api').Room) => room.image_url || FALLBACK_IMG;
 
 function BookRoomModal({ room, userId, onClose }: { room: Room; userId: number | null | undefined; onClose: () => void }) {
   const [startTime, setStartTime] = useState('');
@@ -156,7 +157,8 @@ export default function RoomCatalogPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRooms.length > 0 ? filteredRooms.map((room) => (
               <div key={room.room_id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-                <img src={FALLBACK_IMG} alt={room.room_name} className="w-full h-48 object-cover" />
+                <img src={roomImg(room)} alt={room.room_name} className="w-full h-48 object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG }} />
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-lg text-slate-900">{room.room_name}</h3>

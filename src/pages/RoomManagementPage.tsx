@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
 import AddRoomModal from '../components/AddRoomModal';
-import { Loader2, Trash2, Archive } from 'lucide-react';
+import EditRoomModal from '../components/EditRoomModal';
+import { Loader2, Trash2, Archive, Pencil } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Room } from '../lib/api';
 
@@ -13,6 +14,7 @@ export default function RoomManagementPage() {
   const [allRooms, setAllRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Room | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<Room | null>(null);
   const [archiveReason, setArchiveReason] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
@@ -48,11 +50,20 @@ export default function RoomManagementPage() {
         location: values.location || '-',
         capacity: values.capacity === '' ? 0 : Number(values.capacity),
         status: 'Available',
+        image_url: values.imageUrl || null,
       });
       fetchRooms();
     } catch (err: any) {
       alert('Gagal menambahkan ruangan: ' + err.message);
     }
+  };
+
+  const handleEditSave = async (updated: Partial<Room>) => {
+    if (!editTarget) return;
+    await api.updateRoom(editTarget.room_id, updated);
+    setAllRooms((prev) =>
+      prev.map((r) => r.room_id === editTarget.room_id ? { ...r, ...updated } : r)
+    );
   };
 
   const handleDelete = async (room: Room) => {
@@ -107,6 +118,14 @@ export default function RoomManagementPage() {
         </div>
 
         <AddRoomModal open={addOpen} onClose={() => setAddOpen(false)} onSave={handleAddRoom} />
+
+        {editTarget && (
+          <EditRoomModal
+            room={editTarget}
+            onClose={() => setEditTarget(null)}
+            onSave={handleEditSave}
+          />
+        )}
 
         {/* Archive Reason Modal */}
         {archiveTarget && (
@@ -184,6 +203,13 @@ export default function RoomManagementPage() {
                     </td>
                     <td className="py-4">
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setEditTarget(room)}
+                          disabled={actionLoading === room.room_id}
+                          className="flex items-center gap-1 text-xs font-semibold text-sky-700 border border-sky-200 px-2.5 py-1.5 rounded-lg hover:bg-sky-50 transition disabled:opacity-50"
+                        >
+                          <Pencil size={13} /> Edit
+                        </button>
                         <button
                           onClick={() => { setArchiveTarget(room); setArchiveReason(''); }}
                           disabled={actionLoading === room.room_id}
