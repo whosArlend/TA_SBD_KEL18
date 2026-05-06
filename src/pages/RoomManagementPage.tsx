@@ -3,7 +3,7 @@ import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
 import AddRoomModal from '../components/AddRoomModal';
 import EditRoomModal from '../components/EditRoomModal';
-import { Loader2, Trash2, Archive, Pencil } from 'lucide-react';
+import { Loader2, Archive, Pencil } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Room } from '../lib/api';
 import type { AddRoomValues } from '../components/AddRoomModal';
@@ -70,19 +70,6 @@ export default function RoomManagementPage() {
     setAllRooms((prev) =>
       prev.map((r) => r.room_id === editTarget.room_id ? { ...r, ...updated } : r)
     );
-  };
-
-  const handleDelete = async (room: Room) => {
-    if (!window.confirm(`Hapus ruangan "${room.room_name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
-    setActionLoading(room.room_id);
-    try {
-      await api.deleteRoom(room.room_id);
-      setAllRooms((prev) => prev.filter((r) => r.room_id !== room.room_id));
-    } catch (err: any) {
-      alert('Gagal menghapus: ' + err.message);
-    } finally {
-      setActionLoading(null);
-    }
   };
 
   const handleArchiveSubmit = async () => {
@@ -222,13 +209,6 @@ export default function RoomManagementPage() {
                           className="flex items-center gap-1 text-xs font-semibold text-amber-600 border border-amber-200 px-2.5 py-1.5 rounded-lg hover:bg-amber-50 transition disabled:opacity-50"
                         >
                           <Archive size={13} /> Archive
-                        </button>
-                        <button
-                          onClick={() => handleDelete(room)}
-                          disabled={actionLoading === room.room_id}
-                          className="flex items-center gap-1 text-xs font-semibold text-rose-600 border border-rose-200 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 transition disabled:opacity-50"
-                        >
-                          <Trash2 size={13} /> Delete
                         </button>
                       </div>
                     </td>

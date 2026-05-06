@@ -81,21 +81,22 @@ export const updateRoom = async (roomId, roomData) => {
 };
 
 /**
- * Soft delete a room
+ * Permanently delete a room and its related mappings
  */
 export const deleteRoom = async (roomId) => {
-    const { data, error } = await supabase
+    // Delete related mappings first to avoid FK constraint errors
+    await supabase.from('room_amenities_map').delete().eq('room_id', roomId);
+    await supabase.from('room_rules_map').delete().eq('room_id', roomId);
+
+    const { error } = await supabase
         .from('rooms')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('room_id', roomId)
-        .select()
-        .single();
+        .delete()
+        .eq('room_id', roomId);
 
     if (error) {
         console.error('Supabase Error (deleteRoom):', error);
         throw error;
     }
-    return data;
 };
 
 /**
