@@ -17,6 +17,8 @@ import HelpCenterPage from './pages/HelpCenter'
 import AdminRoute from './routes/AdminRoute'
 import ProtectedRoute from './routes/ProtectedRoute'
 import UserActivityPage from './pages/UserActivityPage'
+import RoomDetail from './pages/RoomDetail';
+import ReservationForm from './pages/ReservationForm';
 
 function UserOnlyOutlet(): React.ReactElement {
   const { role } = useAuth()
@@ -31,6 +33,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        
 
         {/* Routes: wajib login */}
         <Route element={<ProtectedRoute />}>
@@ -40,6 +43,8 @@ export default function App() {
             <Route path="/user-activity" element={<UserActivityPage />} />
             <Route path="/room-catalog" element={<RoomCatalogPage />} />
             <Route path="/my-bookings" element={<MyBookingsPage />} />
+            <Route path="/rooms/:roomId" element={<RoomDetail />} />
+            <Route path="/booking/new" element={<ReservationForm />} />
           </Route>
 
           {/* Admin-only routes */}

@@ -4,7 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Loader2, Users, Search, X, Info } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Room } from '../lib/api';
-import RoomDetailModal from '../components/RoomDetailModal';
+// import RoomDetailModal from '../components/RoomDetailModal';
+import { useNavigate } from 'react-router-dom';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80';
 const roomImg = (room: import('../lib/api').Room) => room.image_url || FALLBACK_IMG;
@@ -98,6 +99,9 @@ function BookRoomModal({ room, userId, onClose }: { room: Room; userId: number |
 
 export default function RoomCatalogPage() {
   const auth = useAuth() as any;
+
+  const navigate = useNavigate();
+  
   const userName = auth?.fullName || localStorage.getItem('userName') || 'User';
   const userId = auth?.user?.user_id as number | undefined;
 
@@ -150,7 +154,7 @@ export default function RoomCatalogPage() {
           <BookRoomModal room={bookingRoom} userId={userId} onClose={() => setBookingRoom(null)} />
         )}
 
-        {detailRoomId !== null && (
+        {/* {detailRoomId !== null && (
           <RoomDetailModal
             roomId={detailRoomId}
             onClose={() => setDetailRoomId(null)}
@@ -160,7 +164,7 @@ export default function RoomCatalogPage() {
               setBookingRoom(room);
             }}
           />
-        )}
+        )} */}
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
@@ -186,8 +190,16 @@ export default function RoomCatalogPage() {
                     <span className="flex items-center gap-1.5"><Users size={16} className="text-slate-400" /> {room.capacity} Orang</span>
                   </div>
                   <div className="mt-auto flex gap-2">
-                    <button
+                    {/* <button
                       onClick={() => setDetailRoomId(room.room_id)}
+                      className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition"
+                    >
+                      <Info size={15} /> Detail
+                    </button> */}
+
+                    {/* Detailroom */}
+                    <button
+                      onClick={() => navigate(`/rooms/${room.room_id}`)} // <--- Menggunakan navigate
                       className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition"
                     >
                       <Info size={15} /> Detail
