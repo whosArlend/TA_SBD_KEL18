@@ -38,7 +38,7 @@ export default function AdminDashboard() {
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     const monday = new Date(d.setDate(diff));
     
-    return Array.from({ length: 5 }, (_, i) => {
+    return Array.from({ length: 7 }, (_, i) => {
       const date = new Date(monday);
       date.setDate(monday.getDate() + i);
       return date.toLocaleDateString('en-CA');
@@ -144,51 +144,78 @@ export default function AdminDashboard() {
                 </div>
               </div>
               
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[600px]">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-widest">
-                      <th className="p-4 border-b border-slate-100 w-40">Room</th>
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => <th key={day} className="p-4 border-b border-slate-100">{day}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {currentRooms.length > 0 ? (
-                      currentRooms.map((room) => (
-                        <tr key={room.room_id} className="group hover:bg-slate-50 transition-colors">
-                          <td className="p-4 border-b border-slate-50 font-bold text-slate-900">{room.room_name}</td>
-                          {weekDays.map(date => (
-                            <td key={date} className="p-4 border-b border-slate-50">
-                              <div className="flex flex-col gap-2">
-                                {reservations
-                                  .filter(res => 
-                                    res.room_id === room.room_id && 
-                                    new Date(res.start_time).toLocaleDateString('en-CA') === date &&
-                                    res.status === 'Approved'
-                                  )
-                                  .map((dailyBooking, index) => (
-                                    <div key={index} className="bg-[#007bb9]/10 border-l-4 border-[#006194] p-2 rounded-r-md">
-                                      <p className="text-[9px] font-bold text-[#006194] truncate">{dailyBooking.meeting_title}</p>
-                                      <p className="text-[8px] text-[#006194]/70 font-medium">
-                                        {new Date(dailyBooking.start_time).getHours().toString().padStart(2, '0')}:00 - 
-                                        {new Date(dailyBooking.end_time).getHours().toString().padStart(2, '0')}:00
-                                      </p>
-                                    </div>
-                                  ))
-                                }
-                              </div>
-                            </td>
-                          ))}
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="p-10 text-center text-slate-400 italic">No rooms found.</td>
+                <div className="overflow-x-auto custom-scrollbar"> 
+                  <table className="w-full text-left border-collapse min-w-[1200px]"> 
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-widest">
+                        {/* Kolom Room dibuat tetap (sticky) agar saat di-slide nama ruangan tetap kelihatan */}
+                        <th className="p-4 border-b border-slate-100 w-48 sticky left-0 bg-slate-50 z-10">Room</th>
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                          <th key={day} className="p-4 border-b border-slate-100 text-center">
+                            {day}
+                          </th>
+                        ))}
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="text-sm">
+                      {currentRooms.length > 0 ? (
+                        currentRooms.map((room) => (
+                          <tr key={room.room_id} className="group hover:bg-slate-50 transition-colors">
+                            {/* Kolom Room Nama juga dibuat sticky agar tetap terlihat saat slide */}
+                            <td className="p-4 border-b border-slate-50 font-bold text-slate-900 align-top sticky left-0 bg-white group-hover:bg-slate-50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                              {room.room_name}
+                            </td>
+                            
+                              {weekDays.map(date => (
+                                <td key={date} className="p-2 border-b border-slate-50 align-top min-w-[150px] w-[150px]">
+                                  <div className="flex flex-col gap-2">
+                                    {reservations
+                                      .filter(res => {
+                                        // 1. Pastikan Room ID cocok
+                                        if (res.room_id !== room.room_id || res.status !== 'Approved') return false;
+
+                                        // 2. Buat objek tanggal untuk perbandingan
+                                        // Kita set jam ke 00:00 agar perbandingan tanggal murni (tanpa pengaruh jam)
+                                        const columnDate = new Date(date).setHours(0,0,0,0);
+                                        const startDate = new Date(res.start_time).setHours(0,0,0,0);
+                                        const endDate = new Date(res.end_time).setHours(0,0,0,0);
+
+                                        // 3. Cek apakah tanggal kolom berada di dalam rentang booking
+                                        return columnDate >= startDate && columnDate <= endDate;
+                                      })
+                                      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+                                      .map((dailyBooking, index) => {
+                                        // Cek apakah ini hari pertama atau bukan untuk tampilan jam
+                                        const isFirstDay = new Date(dailyBooking.start_time).toLocaleDateString('en-CA') === date;
+                                        const isLastDay = new Date(dailyBooking.end_time).toLocaleDateString('en-CA') === date;
+
+                                        return (
+                                          <div key={index} className="bg-[#007bb9]/10 border-l-4 border-[#006194] p-2 rounded-r-md shadow-sm">
+                                            <p className="text-[9px] font-bold text-[#006194] leading-tight mb-1">
+                                              {dailyBooking.meeting_title}
+                                            </p>
+                                            <p className="text-[8px] text-[#006194]/70 font-medium">
+                                              {/* Jika hari pertama tampilkan jam mulai, jika hari terakhir tampilkan jam selesai */}
+                                              {isFirstDay ? new Date(dailyBooking.start_time).getHours().toString().padStart(2, '0') : '00'}:00 - 
+                                              {isLastDay ? new Date(dailyBooking.end_time).getHours().toString().padStart(2, '0') : '23'}:59
+                                            </p>
+                                          </div>
+                                        );
+                                      })
+                                    }
+                                  </div>
+                                </td>
+                              ))}
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={8} className="p-10 text-center text-slate-400 italic">No rooms found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
               {/* Pagination Nomor Halaman */}
               <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between mt-auto">
