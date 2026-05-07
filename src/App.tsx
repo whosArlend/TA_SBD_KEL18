@@ -12,6 +12,8 @@ import RegisterPage from './pages/RegisterPage'
 import UserDashboard from './pages/UserDashboard'
 import RoomManagementPage from './pages/RoomManagementPage'
 import RoomCatalogPage from './pages/RoomCatalogPage'
+import RoomDetailPage from './pages/RoomDetailPage'
+import BookRoomPage from './pages/BookRoomPage'
 import MyBookingsPage from './pages/MyBookingsPage'
 import HelpCenterPage from './pages/HelpCenter'
 import AdminRoute from './routes/AdminRoute'
@@ -42,6 +44,8 @@ export default function App() {
             <Route path="/user-dashboard" element={<UserDashboard />} />
             <Route path="/user-activity" element={<UserActivityPage />} />
             <Route path="/room-catalog" element={<RoomCatalogPage />} />
+            <Route path="/room-catalog/:id" element={<RoomDetailPage />} />
+            <Route path="/book-room/:roomId" element={<BookRoomPage />} />
             <Route path="/my-bookings" element={<MyBookingsPage />} />
             <Route path="/rooms/:roomId" element={<RoomDetail />} />
             <Route path="/booking/new" element={<ReservationForm />} />

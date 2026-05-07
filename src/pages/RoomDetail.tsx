@@ -3,11 +3,42 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import * as api from '../lib/api';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  ChevronRight, Users, Layers, Check, 
-  Lock, CheckCircle2, ArrowRight, 
-  Info, ArrowLeft, ArrowRight as ArrowRightIcon, Home, History
+import {
+  ChevronRight, Users, Layers, Check,
+  Lock, CheckCircle2, ArrowRight,
+  Info, ArrowLeft, ChevronLeft, ChevronRight as ChevronRightIcon,
+  Building, MapPin, Calendar, CalendarCheck, History
 } from 'lucide-react';
+
+// ─── Reusable sub-components ────────────────────────────────────────────────
+
+const PillLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-slate-400 mb-1.5">
+    {children}
+  </p>
+);
+
+const StatCard: React.FC<{ label: string; icon: React.ReactNode; value: React.ReactNode }> = ({
+  label, icon, value,
+}) => (
+  <div className="bg-slate-50 rounded-lg p-3">
+    <PillLabel>{label}</PillLabel>
+    <p className="text-[15px] font-medium text-slate-800 flex items-center gap-2">
+      <span className="text-sky-600">{icon}</span>
+      {value}
+    </p>
+  </div>
+);
+
+// ─── Slot types ──────────────────────────────────────────────────────────────
+
+type SlotResult =
+  | { status: 'past' }
+  | { status: 'booked'; detail: api.Reservation; isPast: boolean }
+  | { status: 'selected' }
+  | { status: 'available' };
+
+// ─── Main component ──────────────────────────────────────────────────────────
 
 const RoomDetail: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -19,13 +50,11 @@ const RoomDetail: React.FC = () => {
   const [amenities, setAmenities] = useState<api.Amenity[]>([]);
   const [rules, setRules] = useState<api.Rule[]>([]);
   const [reservations, setReservations] = useState<api.Reservation[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  
-  // State Navigasi Tanggal
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const operationalHours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+  const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
 
   useEffect(() => {
     if (roomId) fetchRoomDetail();
@@ -37,62 +66,68 @@ const RoomDetail: React.FC = () => {
       const roomData = await api.getRoomById(roomId!);
       setRoom(roomData);
       if (roomData.room_amenities_map) {
-        setAmenities(roomData.room_amenities_map.map(item => ({
-          amenity_id: item.amenities.amenity_id,
-          amenity_name: item.amenities.amenity_name
-        })));
+        setAmenities(
+          roomData.room_amenities_map.map((item: any) => ({
+            amenity_id: item.amenities.amenity_id,
+            amenity_name: item.amenities.amenity_name,
+          }))
+        );
       }
       if (roomData.room_rules_map) {
-        setRules(roomData.room_rules_map.map(item => ({
-          rule_id: item.rules.rule_id, 
-          rule_name: item.rules.rule_name
-        })));
+        setRules(
+          roomData.room_rules_map.map((item: any) => ({
+            rule_id: item.rules.rule_id,
+            rule_name: item.rules.rule_name,
+          }))
+        );
       }
       const resData = await api.getReservations({ room_id: Number(roomId) });
-      setReservations(resData.filter(r => r.status !== 'Canceled'));
+      setReservations(resData.filter((r: api.Reservation) => r.status !== 'Canceled'));
     } catch (error: any) {
-      console.error("Error:", error.message);
+      console.error('Error:', error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const changeDate = (days: number) => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + days);
-    setSelectedDate(newDate);
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + days);
+    setSelectedDate(d);
     setSelectedSlot(null);
   };
 
-  const getSlotStatus = (hour: number) => {
+  const getSlotStatus = (hour: number): SlotResult => {
     const now = new Date();
-    
-    // Normalisasi tanggal untuk pembandingan
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const currentSelected = new Date(selectedDate);
-    currentSelected.setHours(0, 0, 0, 0);
+    const current = new Date(selectedDate);
+    current.setHours(0, 0, 0, 0);
 
     const dateStr = selectedDate.toLocaleDateString('en-CA');
     const isToday = dateStr === now.toLocaleDateString('en-CA');
 
-    // 1. Cek Tanggal/Jam Lampau
-    if (currentSelected < today || (isToday && hour <= now.getHours())) {
-      // Kita tetap cek apakah ada riwayat booking di waktu lampau tersebut
-      const wasReserved = reservations.find(res => {
+    if (current < today || (isToday && hour <= now.getHours())) {
+      const wasReserved = reservations.find((res) => {
         const start = new Date(res.start_time);
-        return start.toLocaleDateString('en-CA') === dateStr && hour === start.getHours();
+        return (
+          start.toLocaleDateString('en-CA') === dateStr &&
+          hour === start.getHours()
+        );
       });
-      return wasReserved ? { status: 'booked', detail: wasReserved, isPast: true } : { status: 'past' };
+      return wasReserved
+        ? { status: 'booked', detail: wasReserved, isPast: true }
+        : { status: 'past' };
     }
 
-    // 2. Cek Reservasi Aktif
-    const isReserved = reservations.find(res => {
+    const isReserved = reservations.find((res) => {
       const start = new Date(res.start_time);
       const end = new Date(res.end_time);
-      return start.toLocaleDateString('en-CA') === dateStr && 
-             hour >= start.getHours() && 
-             hour < end.getHours();
+      return (
+        start.toLocaleDateString('en-CA') === dateStr &&
+        hour >= start.getHours() &&
+        hour < end.getHours()
+      );
     });
 
     if (isReserved) return { status: 'booked', detail: isReserved, isPast: false };
@@ -100,165 +135,248 @@ const RoomDetail: React.FC = () => {
     return { status: 'available' };
   };
 
-  // Logika Label Tombol Today Dinamis
-  const isSelectedToday = selectedDate.toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA');
-  const dateLabel = selectedDate.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: '2-digit' });
+  const fmt = (h: number) => `${String(h).padStart(2, '0')}:00`;
+
+  const isSelectedToday =
+    selectedDate.toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA');
+
+  const dateLabel = selectedDate.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+  });
+
+  const fullDateLabel = selectedDate.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 
   if (loading || !room) return null;
 
   return (
     <DashboardLayout role="user" userName={userName}>
-      <div className="max-w-6xl mx-auto space-y-8 w-full p-4 md:p-8 font-inter">
-        
-        {/* Breadcrumbs */}
-        <nav className="flex mb-6">
-          <ol className="flex items-center space-x-2">
-            <li><Link className="text-[12px] font-bold text-slate-500 hover:text-[#006194] uppercase tracking-wider" to="/rooms">User Portal</Link></li>
-            <li className="flex items-center"><ChevronRight className="w-4 h-4 text-slate-400 mx-1" /><span className="text-[12px] font-bold text-[#006194] uppercase tracking-wider">Check Availability</span></li>
-          </ol>
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-5 font-sans">
+
+        {/* ── Breadcrumb ── */}
+        <nav className="flex items-center gap-1.5 mb-2">
+          <Link
+            to="/rooms"
+            className="text-[12px] font-medium text-slate-400 hover:text-sky-600 uppercase tracking-wider transition-colors"
+          >
+            User Portal
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+          <span className="text-[12px] font-medium text-sky-600 uppercase tracking-wider">
+            Check Availability
+          </span>
         </nav>
 
-        {/* Room Header Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-md flex flex-col lg:flex-row">
-          <div className="w-full lg:w-[45%] h-64 lg:h-auto overflow-hidden relative bg-slate-100">
-            <img className="w-full h-full object-cover" src={room.image_url || ''} alt={room.room_name} />
+        {/* ── Room Header Card ── */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+          {/* Image */}
+          <div className="h-56 lg:h-auto bg-slate-100 overflow-hidden">
+            <img
+              src={room.image_url || ''}
+              alt={room.room_name}
+              className="w-full h-full object-cover"
+            />
           </div>
-          <div className="p-8 lg:p-10 flex-1 flex flex-col justify-between bg-gradient-to-br from-white to-[#f7f9ff]">
-            <div>
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
-                      {/* Ikon Zap diganti Home */}
-                      <Home className="w-5 h-5 text-sky-600" />
-                    </div>
-                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Type</span>
-                  </div>
-                  <h2 className="text-4xl font-bold tracking-tight text-slate-900">{room.room_name}</h2>
-                  <p className="text-sm font-semibold text-sky-600 mt-1 uppercase tracking-wide">{room.room_type || 'General Room'}</p>
-                </div>
-                <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-[13px] font-bold border border-green-200 flex items-center shadow-sm">
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-                  Available Now
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-8 mb-10">
-                <div className="flex flex-col gap-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Capacity</p>
-                  <p className="text-xl font-extrabold text-slate-800 flex items-center gap-3">
-                    <Users className="w-6 h-6 text-sky-600" />
-                    {room.capacity} <span className="text-sm font-medium text-slate-500">People</span>
-                  </p>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Location</p>
-                  <p className="text-xl font-extrabold text-slate-800 flex items-center gap-3">
-                    <Layers className="w-6 h-6 text-sky-600" />
-                    {room.location || '-'}
-                  </p>
-                </div>
 
-                <div className="flex flex-col gap-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Type</p>
-                  <p className="text-xl font-extrabold text-slate-800 flex items-center gap-3">
-                    {/* Ikon Zap diganti Home */}
-                    <Home className="w-6 h-6 text-sky-600" />
-                    {room.room_type || '-'}
-                  </p>
-                </div>
+          {/* Info */}
+          <div className="p-6 lg:p-8 flex flex-col justify-between gap-6">
+            {/* Title row */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <PillLabel>{room.room_type || 'Meeting Room'}</PillLabel>
+                <h1 className="text-2xl font-semibold text-slate-900 leading-snug">
+                  {room.room_name}
+                </h1>
               </div>
+              <span className="flex-shrink-0 inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                Available
+              </span>
             </div>
 
-            {/* Amenities Section */}
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard
+                label="Capacity"
+                icon={<Users className="w-4 h-4" />}
+                value={<>{room.capacity} <span className="text-slate-400 font-normal text-sm">pax</span></>}
+              />
+              <StatCard
+                label="Location"
+                icon={<MapPin className="w-4 h-4" />}
+                value={room.location || '—'}
+              />
+              <StatCard
+                label="Type"
+                icon={<Building className="w-4 h-4" />}
+                value={room.room_type || '—'}
+              />
+            </div>
+
+            {/* Amenities */}
             <div>
-              <h4 className="text-[12px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-4 flex items-center">
-                <span className="w-10 h-px bg-slate-200 mr-3"></span>
-                Included Amenities
-              </h4>
-              <div className="flex flex-wrap gap-3">
+              <PillLabel>Amenities</PillLabel>
+              <div className="flex flex-wrap gap-2">
                 {amenities.map((item) => (
-                  <div key={item.amenity_id} className="flex items-center bg-white border border-slate-200 px-5 py-3 rounded-2xl shadow-sm hover:shadow-md hover:border-sky-200 transition-all cursor-default group">
-                    <Check className="text-sky-500 w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-bold text-slate-700">{item.amenity_name}</span>
-                  </div>
+                  <span
+                    key={item.amenity_id}
+                    className="inline-flex items-center gap-1.5 text-[13px] text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5"
+                  >
+                    <Check className="w-3.5 h-3.5 text-sky-500" />
+                    {item.amenity_name}
+                  </span>
                 ))}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Availability Grid */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        {/* ── Availability Grid ── */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <div>
-              <h3 className="text-xl font-bold text-slate-900">Daily Schedule</h3>
-              <p className="text-sm text-slate-500 mt-1 capitalize">
-                {selectedDate.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
+              <p className="text-[15px] font-medium text-slate-900">Daily Schedule</p>
+              <p className="text-[13px] text-slate-400 mt-0.5 capitalize">{fullDateLabel}</p>
             </div>
-            
-            <div className="flex items-center space-x-3">
-              <button onClick={() => changeDate(-1)} className="p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors shadow-sm"><ArrowLeft className="w-4 h-4"/></button>
-              <button 
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => changeDate(-1)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                aria-label="Hari sebelumnya"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
                 onClick={() => { setSelectedDate(new Date()); setSelectedSlot(null); }}
-                className={`px-6 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold transition-all shadow-sm ${isSelectedToday ? 'text-slate-700 bg-white' : 'text-sky-600 bg-sky-50 border-sky-100'}`}
+                className={`px-4 py-1.5 rounded-lg border text-[13px] font-medium transition-all ${
+                  isSelectedToday
+                    ? 'border-slate-200 text-slate-700 bg-white'
+                    : 'border-sky-200 text-sky-600 bg-sky-50'
+                }`}
               >
                 {isSelectedToday ? 'Today' : dateLabel}
               </button>
-              <button onClick={() => changeDate(1)} className="p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors shadow-sm"><ArrowRightIcon className="w-4 h-4"/></button>
+              <button
+                onClick={() => changeDate(1)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                aria-label="Hari berikutnya"
+              >
+                <ChevronRightIcon className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-px bg-slate-200 border border-slate-200 rounded-2xl overflow-hidden shadow-inner">
-            {operationalHours.map(hour => {
+          {/* Legend */}
+          <div className="flex items-center gap-5 px-6 py-2.5 bg-slate-50 border-b border-slate-100">
+            {[
+              { color: 'bg-sky-100 border-sky-400', label: 'Dipilih' },
+              { color: 'bg-slate-100 border-slate-300', label: 'Terisi' },
+              { color: 'bg-white border-dashed border-slate-300', label: 'Tersedia' },
+            ].map(({ color, label }) => (
+              <div key={label} className="flex items-center gap-1.5">
+                <span className={`w-3 h-3 rounded border ${color}`} />
+                <span className="text-[12px] text-slate-500">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Slots */}
+          <div className="divide-y divide-slate-100">
+            {HOURS.map((hour) => {
               const slot = getSlotStatus(hour);
-              const timeString = `${hour.toString().padStart(2, '0')}:00`;
+              const time = fmt(hour);
 
-              if (slot.status === 'booked') {
-                return (
-                  <div key={hour} className="grid grid-cols-[110px_1fr] bg-slate-50 opacity-80">
-                    <div className="p-5 border-r border-slate-200 text-slate-400 font-bold text-[12px] flex items-center justify-center">{timeString}</div>
-                    <div className="p-4 flex items-center">
-                      <div className="w-full h-14 bg-white border border-slate-200 shadow-sm rounded-xl px-5 flex items-center text-slate-500 text-sm font-medium">
-                        <History className="w-4 h-4 mr-3 text-slate-300" />
-                        <span className="flex-1">{slot.detail?.meeting_title} <span className="text-xs text-slate-400">({slot.detail?.person_in_charge})</span></span>
-                        <Lock className="w-4 h-4 text-slate-300" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-
+              // ── Past ──
               if (slot.status === 'past') {
                 return (
-                  <div key={hour} className="grid grid-cols-[110px_1fr] bg-slate-50/50">
-                    <div className="p-5 border-r border-slate-200 text-slate-300 font-bold text-[12px] flex items-center justify-center">{timeString}</div>
-                    <div className="p-4 flex items-center">
-                      <div className="w-full h-10 border border-slate-100 rounded-xl flex items-center px-5 text-slate-300 text-xs italic">Waktu sudah berlalu</div>
+                  <div key={hour} className="grid grid-cols-[72px_1fr] opacity-40">
+                    <div className="flex items-center justify-center py-3 border-r border-slate-100 text-[12px] font-medium text-slate-400">
+                      {time}
+                    </div>
+                    <div className="flex items-center px-4 py-3">
+                      <span className="text-[12px] text-slate-400 italic">Waktu sudah berlalu</span>
                     </div>
                   </div>
                 );
               }
 
-              const isSelected = slot.status === 'selected';
-              return (
-                <div 
-                  key={hour} 
-                  onClick={() => setSelectedSlot(isSelected ? null : hour)}
-                  className={`grid grid-cols-[110px_1fr] group transition-colors cursor-pointer ${isSelected ? 'bg-white ring-2 ring-sky-600 ring-inset z-10 relative shadow-lg' : 'bg-white hover:bg-sky-50/40'}`}
-                >
-                  <div className={`p-5 border-r border-slate-200 font-bold text-[12px] flex items-center justify-center ${isSelected ? 'text-sky-600' : 'text-slate-400'}`}>{timeString}</div>
-                  <div className="p-4 flex items-center">
-                    {isSelected ? (
-                      <div className="w-full h-14 bg-sky-50 border border-sky-100 rounded-xl px-5 flex items-center justify-between text-sky-700 text-sm font-bold">
-                        <div className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-sky-600 mr-3 animate-pulse"></span>Selected Slot</div>
-                        <CheckCircle2 className="w-6 h-6" />
+              // ── Booked ──
+              if (slot.status === 'booked') {
+                return (
+                  <div key={hour} className="grid grid-cols-[72px_1fr] bg-slate-50/60">
+                    <div className="flex items-center justify-center py-3 border-r border-slate-100 text-[12px] font-medium text-slate-400">
+                      {time}
+                    </div>
+                    <div className="flex items-center px-4 py-2.5">
+                      <div className="w-full flex items-center justify-between bg-white border border-slate-200 rounded-lg px-4 py-2.5">
+                        <div className="flex items-center gap-3">
+                          <Lock className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+                          <div>
+                            <p className="text-[13px] font-medium text-slate-700 leading-tight">
+                              {slot.detail?.meeting_title}
+                            </p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">
+                              {slot.detail?.person_in_charge}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-medium px-2.5 py-1 bg-slate-100 text-slate-500 rounded-md border border-slate-200">
+                          Booked
+                        </span>
                       </div>
-                    ) : (
-                      <div className="w-full h-10 border border-dashed border-sky-200 rounded-xl flex items-center justify-center text-sky-600/40 text-[11px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all">Select Time</div>
-                    )}
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── Selected ──
+              if (slot.status === 'selected') {
+                return (
+                  <div
+                    key={hour}
+                    onClick={() => setSelectedSlot(null)}
+                    className="grid grid-cols-[72px_1fr] cursor-pointer ring-2 ring-inset ring-sky-500 relative z-10"
+                  >
+                    <div className="flex items-center justify-center py-3 border-r border-sky-200 text-[12px] font-medium text-sky-600">
+                      {time}
+                    </div>
+                    <div className="flex items-center px-4 py-2.5">
+                      <div className="w-full flex items-center justify-between bg-sky-50 border border-sky-200 rounded-lg px-4 py-2.5">
+                        <div className="flex items-center gap-2.5 text-sky-700 font-medium text-[13px]">
+                          <CheckCircle2 className="w-4 h-4 text-sky-500" />
+                          Slot dipilih
+                        </div>
+                        <span className="text-[12px] text-sky-500 font-medium">
+                          {fmt(hour)} – {fmt(hour + 1)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── Available ──
+              return (
+                <div
+                  key={hour}
+                  onClick={() => setSelectedSlot(hour)}
+                  className="grid grid-cols-[72px_1fr] cursor-pointer group hover:bg-sky-50/30 transition-colors"
+                >
+                  <div className="flex items-center justify-center py-3 border-r border-slate-100 text-[12px] font-medium text-slate-400 group-hover:text-sky-500 transition-colors">
+                    {time}
+                  </div>
+                  <div className="flex items-center px-4 py-2.5">
+                    <div className="w-full h-10 border border-dashed border-slate-200 group-hover:border-sky-300 group-hover:bg-sky-50 rounded-lg flex items-center justify-center gap-2 text-[12px] text-slate-300 group-hover:text-sky-500 font-medium transition-all uppercase tracking-wider">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Pilih slot ini
+                    </div>
                   </div>
                 </div>
               );
@@ -266,32 +384,59 @@ const RoomDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Room Rules Section */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-          <div className="mb-8"><h3 className="text-xl font-bold text-slate-900">Room Rules & Guidelines</h3></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
+        {/* ── Room Rules ── */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <p className="text-[15px] font-medium text-slate-900 mb-4">Room Rules & Guidelines</p>
+          <div className="divide-y divide-slate-100">
             {rules.map((rule) => (
-              <div key={rule.rule_id} className="flex items-start gap-3">
-                <CheckCircle2 className="text-sky-600 w-5 h-5 mt-0.5 flex-shrink-0" />
-                <div><p className="text-sm font-semibold text-slate-800">{rule.rule_name}</p><p className="text-xs text-slate-500">Kebijakan resmi ruangan harus dipatuhi.</p></div>
+              <div key={rule.rule_id} className="flex items-start gap-3 py-3">
+                <CheckCircle2 className="w-4 h-4 text-sky-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-[14px] font-medium text-slate-800">{rule.rule_name}</p>
+                  <p className="text-[12px] text-slate-400 mt-0.5">
+                    Kebijakan resmi ruangan harus dipatuhi.
+                  </p>
+                </div>
               </div>
             ))}
           </div>
-          <div className="mt-8 p-4 bg-sky-50 rounded-xl border border-sky-100">
-            <p className="text-xs text-sky-700 font-medium flex items-center"><Info className="w-4 h-4 mr-2" /> Pelanggaran aturan dapat membatasi hak akses pemesanan di masa mendatang.</p>
+          <div className="mt-4 flex items-start gap-2 bg-sky-50 border border-sky-100 rounded-lg px-4 py-3">
+            <Info className="w-4 h-4 text-sky-500 flex-shrink-0 mt-0.5" />
+            <p className="text-[12px] text-sky-700">
+              Pelanggaran aturan dapat membatasi hak akses pemesanan di masa mendatang.
+            </p>
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="flex flex-col items-center py-12 border-t border-slate-100">
-          <button 
-            onClick={() => selectedSlot && navigate(`/booking/new?room_id=${roomId}&time=${selectedSlot}&date=${selectedDate.toLocaleDateString('en-CA')}`)}
+        {/* ── CTA ── */}
+        <div className="pb-8">
+          <button
+            onClick={() =>
+              selectedSlot &&
+              navigate(
+                `/booking/new?room_id=${roomId}&time=${selectedSlot}&date=${selectedDate.toLocaleDateString('en-CA')}`
+              )
+            }
             disabled={!selectedSlot}
-            className={`group w-full max-w-xl py-6 rounded-2xl font-bold text-lg shadow-2xl transition-all duration-300 flex items-center justify-center ${selectedSlot ? 'bg-[#006194] text-white hover:bg-[#006194]/90 shadow-sky-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
+            className={`w-full flex items-center justify-center gap-2.5 py-4 rounded-xl text-[15px] font-medium transition-all duration-200 ${
+              selectedSlot
+                ? 'bg-sky-700 text-white hover:bg-sky-800 shadow-sm shadow-sky-200'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            }`}
           >
-            {selectedSlot ? 'Confirm Booking' : 'Select a Time Slot Above'} <ArrowRight className="ml-3 transition-transform group-hover:translate-x-1" />
+            <CalendarCheck className="w-5 h-5" />
+            {selectedSlot
+              ? `Konfirmasi Booking — ${fmt(selectedSlot)}`
+              : 'Pilih slot waktu di atas'}
+            {selectedSlot && <ArrowRight className="w-4 h-4 ml-1" />}
           </button>
+          {selectedSlot && (
+            <p className="text-center text-[12px] text-slate-400 mt-2">
+              {fullDateLabel} · {fmt(selectedSlot)} – {fmt(selectedSlot + 1)}
+            </p>
+          )}
         </div>
+
       </div>
     </DashboardLayout>
   );

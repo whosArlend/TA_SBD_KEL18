@@ -29,10 +29,10 @@ export default function RoomManagementPage() {
     r.room_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Stats: hitung dari semua ruangan (termasuk archived)
-  const totalRooms = rooms.length;
-  const availableRooms = rooms.filter((r) => r.status === 'Available').length;
-  const maintenanceRooms = allRooms.filter((r) => r.status === 'Maintenance').length;
+  // Stats: hitung dari KESELURUHAN ruangan (termasuk yang diarsipkan)
+  const totalRooms = allRooms.length;
+  const availableRooms = allRooms.filter((r) => r.status === 'Available').length;
+  const maintenanceRooms = totalRooms - availableRooms; 
   const availability = totalRooms > 0 ? Math.round((availableRooms / totalRooms) * 100) : 0;
 
   useEffect(() => { fetchRooms(); }, []);
@@ -109,7 +109,7 @@ export default function RoomManagementPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-1 text-slate-900">Room Management</h1>
-            <p className="text-slate-500">Configure and monitor all meeting spaces.</p>
+            <p className="text-slate-500">Kelola dan awasi semua fasilitas ruangan rapat.</p>
           </div>
           <button onClick={() => setAddOpen(true)} className="bg-[#0065A1] text-white px-5 py-2.5 rounded-lg font-semibold shadow hover:bg-blue-800 transition">
             + Add New Room

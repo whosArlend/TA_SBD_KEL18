@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { 
   Building2, 
   CalendarCheck, 
@@ -13,7 +13,7 @@ import {
   CheckCheck,
   XCircle,
   Clock,
-  Search // Tambahkan import Search
+  Search
 } from 'lucide-react';
 import * as api from '../lib/api';
 
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   // --- STATE UNTUK SEARCH & PAGINATION ---
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const roomsPerPage = 5; // Jumlah ruangan per slide/halaman
+  const roomsPerPage = 5;
 
   const getDaysInWeek = () => {
     const d = new Date();
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
           <p className="text-slate-500 text-base">Monitoring real-time operational capacity and pending actions.</p>
         </div>
 
-        {/* Key Metrics (Tetap Sama) */}
+        {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <div className="flex justify-between items-start mb-4">
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Room Schedule dengan Search & Pagination */}
+          {/* Room Schedule Container */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white">
@@ -132,7 +132,6 @@ export default function AdminDashboard() {
                   <p className="text-sm text-slate-500">Weekly operational overview</p>
                 </div>
 
-                {/* --- FITUR SEARCHING --- */}
                 <div className="relative group">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#006194] transition-colors" size={16} />
                   <input 
@@ -158,15 +157,8 @@ export default function AdminDashboard() {
                       currentRooms.map((room) => (
                         <tr key={room.room_id} className="group hover:bg-slate-50 transition-colors">
                           <td className="p-4 border-b border-slate-50 font-bold text-slate-900">{room.room_name}</td>
-                          {weekDays.map(date => {
-                            const dailyBooking = reservations.find(res => 
-                              res.room_id === room.room_id && 
-                              new Date(res.start_time).toLocaleDateString('en-CA') === date &&
-                              res.status === 'Approved'
-                            );
-                            return (
+                          {weekDays.map(date => (
                             <td key={date} className="p-4 border-b border-slate-50">
-                              {/* Menggunakan filter untuk mencari SEMUA booking di hari tersebut */}
                               <div className="flex flex-col gap-2">
                                 {reservations
                                   .filter(res => 
@@ -177,7 +169,7 @@ export default function AdminDashboard() {
                                   .map((dailyBooking, index) => (
                                     <div key={index} className="bg-[#007bb9]/10 border-l-4 border-[#006194] p-2 rounded-r-md">
                                       <p className="text-[9px] font-bold text-[#006194] truncate">{dailyBooking.meeting_title}</p>
-                                      <p className="text-[8px] text-[#006194]/70">
+                                      <p className="text-[8px] text-[#006194]/70 font-medium">
                                         {new Date(dailyBooking.start_time).getHours().toString().padStart(2, '0')}:00 - 
                                         {new Date(dailyBooking.end_time).getHours().toString().padStart(2, '0')}:00
                                       </p>
@@ -186,8 +178,7 @@ export default function AdminDashboard() {
                                 }
                               </div>
                             </td>
-                            );
-                          })}
+                          ))}
                         </tr>
                       ))
                     ) : (
@@ -199,10 +190,10 @@ export default function AdminDashboard() {
                 </table>
               </div>
 
-              {/* --- FITUR PAGINATION (NOMOR HALAMAN) --- */}
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              {/* Pagination Nomor Halaman */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between mt-auto">
                 <div className="text-[11px] text-slate-500 font-medium">
-                  Showing {indexOfFirstRoom + 1} to {Math.min(indexOfLastRoom, filteredRooms.length)} of {filteredRooms.length} rooms
+                  Showing {filteredRooms.length > 0 ? indexOfFirstRoom + 1 : 0} to {Math.min(indexOfLastRoom, filteredRooms.length)} of {filteredRooms.length} rooms
                 </div>
                 <div className="flex items-center gap-1">
                   <button 
@@ -239,7 +230,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Recent Activity (Tetap Sama) */}
+          {/* Recent Activity List */}
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold text-slate-900">Recent Activity</h3>
@@ -259,14 +250,17 @@ export default function AdminDashboard() {
                     <p className="text-sm text-slate-900 font-bold truncate w-40">
                       {res.status} Booking: {res.rooms?.room_name || 'Room'}
                     </p>
-                    <p className="text-[12px] text-slate-500">
+                    <p className="text-[12px] text-slate-500 font-medium">
                       By {res.users?.full_name || 'User'} • {new Date(res.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
-            <button onClick={() => navigate('/activity-feed')} className="mt-8 w-full py-3 text-[#006194] text-xs font-bold hover:bg-slate-50 border-t border-slate-100 transition-colors uppercase tracking-widest">
+            <button 
+              onClick={() => navigate('/activity-feed')} 
+              className="mt-8 w-full py-3 text-[#006194] text-xs font-bold hover:bg-slate-50 border-t border-slate-100 transition-colors uppercase tracking-widest"
+            >
               View All Recent Activity
             </button>
           </div>
