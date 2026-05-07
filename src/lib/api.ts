@@ -169,6 +169,12 @@ export const checkNimApi = (nim: string) =>
     body: JSON.stringify({ nim }),
   });
 
+export const checkEmailApi = (email: string) =>
+  apiFetch<{ exists: boolean }>('/auth/check-email', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+
 // ─── Rooms ────────────────────────────────────────────────────────────────────
 
 export const getRooms = () => apiFetch<Room[]>('/rooms');

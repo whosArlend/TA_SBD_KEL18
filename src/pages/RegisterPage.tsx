@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TextField from '../components/TextField'
-import { registerApi, checkNimApi } from '../lib/api'
+import { registerApi, checkNimApi, checkEmailApi } from '../lib/api'
 
 type FieldKey = 'fullName' | 'nid' | 'email' | 'password' | 'confirmPassword'
 
@@ -25,7 +25,7 @@ function hasSpecialChar(value: string) {
   return /[^A-Za-z0-9]/.test(value)
 }
 
-function validate(values: FormState, nimExists: boolean = false): FormErrors {
+function validate(values: FormState, nimExists: boolean = false, emailExists: boolean = false): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.fullName.trim()) errors.fullName = 'Nama lengkap wajib diisi.'
@@ -38,6 +38,7 @@ function validate(values: FormState, nimExists: boolean = false): FormErrors {
 
   if (!values.email.trim()) errors.email = 'Email wajib diisi.'
   else if (!isEmail(values.email)) errors.email = 'Format email tidak valid.'
+  else if (emailExists) errors.email = 'Email sudah terdaftar.'
 
   if (!values.password) errors.password = 'Password wajib diisi.'
   else if (values.password.length < 8)
@@ -57,12 +58,14 @@ function fieldStatus(
   touched: TouchedState,
   errors: FormErrors,
   values: FormState,
-  checkingNim?: boolean
+  checkingNim?: boolean,
+  checkingEmail?: boolean
 ) {
-  if (!touched[key]) return 'idle' as const
   if (key === 'nid' && checkingNim) return 'idle' as const
-  if (errors[key]) return 'error' as const
-  if (values[key].trim()) return 'success' as const
+  if (key === 'email' && checkingEmail) return 'idle' as const
+  const isTouchedOrDirty = touched[key] || values[key].trim() !== ''
+  if (errors[key] && isTouchedOrDirty) return 'error' as const
+  if (!errors[key] && values[key].trim() !== '') return 'success' as const
   return 'idle' as const
 }
 
@@ -124,21 +127,26 @@ export default function RegisterPage() {
   const [nimExists, setNimExists] = React.useState(false)
   const [checkingNim, setCheckingNim] = React.useState(false)
 
+  const [emailExists, setEmailExists] = React.useState(false)
+  const [checkingEmail, setCheckingEmail] = React.useState(false)
+
   // Live Check NIM/NIP
   React.useEffect(() => {
     const nim = values.nid.trim()
+    setCheckingNim(true)
+    
     if (nim.length < 5) {
       setNimExists(false)
+      setCheckingNim(false)
       return
     }
 
     const checkNim = async () => {
-      setCheckingNim(true)
       try {
         const { exists } = await checkNimApi(nim)
         setNimExists(exists)
       } catch (err) {
-        console.error('Error saat cek NIM ke backend (Mungkin Vercel belum update):', err)
+        console.error('Error saat cek NIM ke backend:', err)
         setNimExists(false)
       } finally {
         setCheckingNim(false)
@@ -149,7 +157,34 @@ export default function RegisterPage() {
     return () => clearTimeout(timeoutId)
   }, [values.nid])
 
-  const errors = React.useMemo(() => validate(values, nimExists), [values, nimExists])
+  // Live Check Email
+  React.useEffect(() => {
+    const email = values.email.trim()
+    setCheckingEmail(true)
+    
+    if (!isEmail(email)) {
+      setEmailExists(false)
+      setCheckingEmail(false)
+      return
+    }
+
+    const checkEmail = async () => {
+      try {
+        const { exists } = await checkEmailApi(email)
+        setEmailExists(exists)
+      } catch (err) {
+        console.error('Error saat cek Email ke backend:', err)
+        setEmailExists(false)
+      } finally {
+        setCheckingEmail(false)
+      }
+    }
+
+    const timeoutId = setTimeout(checkEmail, 600) // debounce 600ms
+    return () => clearTimeout(timeoutId)
+  }, [values.email])
+
+  const errors = React.useMemo(() => validate(values, nimExists, emailExists), [values, nimExists, emailExists])
   const canSubmit = Object.keys(errors).length === 0
 
   function onBlur(key: FieldKey) {
@@ -223,7 +258,7 @@ export default function RegisterPage() {
                 autoComplete="name"
                 required
                 status={fieldStatus('fullName', touched, errors, values)}
-                message={touched.fullName ? errors.fullName : undefined}
+                message={(touched.fullName || values.fullName) ? errors.fullName : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 20 20"
@@ -252,7 +287,7 @@ export default function RegisterPage() {
                 inputMode="numeric"
                 required
                 status={fieldStatus('nid', touched, errors, values, checkingNim)}
-                message={touched.nid ? errors.nid : checkingNim ? 'Mengecek ketersediaan...' : undefined}
+                message={checkingNim ? 'Mengecek ketersediaan...' : (touched.nid || values.nid) ? errors.nid : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
@@ -277,9 +312,10 @@ export default function RegisterPage() {
                 onChange={(v) => onChange('email', v)}
                 onBlur={() => onBlur('email')}
                 autoComplete="email"
+                inputMode="email"
                 required
-                status={fieldStatus('email', touched, errors, values)}
-                message={touched.email ? errors.email : undefined}
+                status={fieldStatus('email', touched, errors, values, undefined, checkingEmail)}
+                message={checkingEmail ? 'Mengecek ketersediaan...' : (touched.email || values.email) ? errors.email : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
@@ -305,9 +341,8 @@ export default function RegisterPage() {
                 onBlur={() => onBlur('password')}
                 autoComplete="new-password"
                 required
-                hint="Minimal 8 karakter dan 1 karakter spesial."
                 status={fieldStatus('password', touched, errors, values)}
-                message={touched.password ? errors.password : undefined}
+                message={(values.password !== '') ? errors.password : 'Minimal 8 karakter dan 1 karakter spesial.'}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
@@ -334,9 +369,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 required
                 status={fieldStatus('confirmPassword', touched, errors, values)}
-                message={
-                  touched.confirmPassword ? errors.confirmPassword : undefined
-                }
+                message={(values.confirmPassword !== '') ? errors.confirmPassword : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
