@@ -2,42 +2,45 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 import { Calendar } from 'lucide-react';
+import * as api from '../lib/api';
 
 export default function UserDashboard() {
   const auth = useAuth() as any;
   const userName = auth?.fullName || localStorage.getItem('userName') || 'User';
+  const userId = auth?.user?.user_id as number | undefined;
   const firstName = userName.split(' ')[0];
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0 });
 
   useEffect(() => {
-    const fetchUserStats = async () => {
+    if (!userId) return;
+    const fetchStats = async () => {
       try {
-        const { count: total } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('user_name', userName);
-        const { count: pending } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('user_name', userName).eq('status', 'pending');
-        const { count: approved } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('user_name', userName).eq('status', 'approved');
-
-        setStats({ total: total || 0, pending: pending || 0, approved: approved || 0 });
-      } catch (error) {
-        console.error('Error fetching user stats:', error);
+        const all = await api.getReservations({ user_id: userId });
+        setStats({
+          total: all.length,
+          pending: all.filter((r) => r.status === 'Pending').length,
+          approved: all.filter((r) => r.status === 'Approved').length,
+        });
+      } catch (err) {
+        console.error('Error fetching user stats:', err);
       }
     };
-    if (userName) fetchUserStats();
-  }, [userName]);
+    fetchStats();
+  }, [userId]);
 
   return (
     <DashboardLayout role="user" userName={userName}>
       <div className="p-8 max-w-7xl mx-auto">
-        
+
         {/* Welcome Banner */}
         <div className="bg-white rounded-xl p-8 border border-slate-200 mb-8 flex justify-between items-center bg-gradient-to-r from-white to-blue-50">
           <div>
             <h2 className="text-2xl font-bold text-slate-800 mb-2">Welcome back, {firstName}!</h2>
             <p className="text-slate-600 mb-6 max-w-md">
-              You have {stats.approved} confirmed bookings. Start exploring the catalog to find your next meeting space.
+              You have {stats.approved} confirmed booking{stats.approved !== 1 ? 's' : ''}. Start exploring the catalog to find your next meeting space.
             </p>
             <button onClick={() => navigate('/room-catalog')} className="bg-[#0088FF] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-600 transition shadow-sm flex items-center gap-2">
               <Calendar size={18} /> Book a Room
@@ -76,7 +79,6 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
-
       </div>
     </DashboardLayout>
   );

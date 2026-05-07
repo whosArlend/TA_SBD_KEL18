@@ -1,169 +1,91 @@
-import * as React from 'react'
-import { supabase } from '../lib/supabase'
-import type { Session, User } from '@supabase/supabase-js'
+import * as React from 'react';
+import { loginApi, type AuthUser, type AppRole } from '../lib/api';
 
-export type AppRole = 'admin' | 'user'
+export type { AppRole };
 
 export type AuthState = {
-  session: Session | null
-  user: User | null
-  role: AppRole | null
-  fullName: string | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  authError: string | null
-}
+  user: AuthUser | null;
+  role: AppRole | null;
+  fullName: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  authError: string | null;
+};
 
 type AuthContextType = AuthState & {
-  signIn: (email: string, password: string) => Promise<{ error?: string }>
-  signOut: () => Promise<void>
-}
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signOut: () => void;
+};
 
-const AuthContext = React.createContext<AuthContextType | null>(null)
+const AuthContext = React.createContext<AuthContextType | null>(null);
 
 export function useAuth(): AuthContextType {
-  const ctx = React.useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
-  return ctx
+  const ctx = React.useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
+}
+
+function loadFromStorage(): { user: AuthUser; token: string } | null {
+  try {
+    const token = localStorage.getItem('token');
+    const raw = localStorage.getItem('auth_user');
+    if (!token || !raw) return null;
+    return { token, user: JSON.parse(raw) as AuthUser };
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const stored = loadFromStorage();
+
   const [state, setState] = React.useState<AuthState>({
-    session: null,
-    user: null,
-    role: null,
-    fullName: null,
-    isAuthenticated: false,
-    isLoading: true,
+    user: stored?.user ?? null,
+    role: stored?.user?.role ?? null,
+    fullName: stored?.user?.full_name ?? null,
+    isAuthenticated: !!stored,
+    isLoading: false,
     authError: null,
-  })
+  });
 
-  function normalizeRole(raw: unknown): AppRole | null {
-    if (typeof raw !== 'string') return null
-    const normalized = raw.toLowerCase()
-    
-    if (normalized === 'admin' || normalized === 'system admin') return 'admin'
-    if (normalized === 'user' || normalized === 'mahasiswa' || normalized === 'student') return 'user'
-    return null
-  }
-
-  async function fetchProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('accounts')
-      .select('role, full_name')
-      .eq('user_id', userId)
-      .single()
-
-    if (error || !data) {
-      console.warn('Profile not found / RLS blocked:', error?.message)
-      return { role: null, fullName: null }
-    }
-
-    return {
-      role: normalizeRole(data.role),
-      fullName: typeof data.full_name === 'string' ? data.full_name : null,
-    }
-  }
-
-  const requestIdRef = React.useRef(0)
-
-  async function handleSession(session: Session | null) {
-    const requestId = ++requestIdRef.current
-    if (session?.user) {
-      const profile = await fetchProfile(session.user.id)
-
-      if (requestId !== requestIdRef.current) return
-
-      // If profile can't be loaded, fail closed (safer than guessing a role).
-      if (!profile.role) {
-        setState({
-          session,
-          user: session.user,
-          role: null,
-          fullName: profile.fullName,
-          isAuthenticated: false,
-          isLoading: false,
-          authError:
-            'Akun belum memiliki profil atau akses diblokir (RLS). Hubungi admin.',
-        })
-        return
-      }
-
+  async function signIn(email: string, password: string): Promise<{ error?: string }> {
+    setState((s) => ({ ...s, isLoading: true, authError: null }));
+    try {
+      const { token, user } = await loginApi(email, password);
+      localStorage.setItem('token', token);
+      localStorage.setItem('auth_user', JSON.stringify(user));
       setState({
-        session,
-        user: session.user,
-        role: profile.role,
-        fullName: profile.fullName,
+        user,
+        role: user.role,
+        fullName: user.full_name,
         isAuthenticated: true,
         isLoading: false,
         authError: null,
-      })
-    } else {
-      if (requestId !== requestIdRef.current) return
-      setState({
-        session: null,
-        user: null,
-        role: null,
-        fullName: null,
-        isAuthenticated: false,
-        isLoading: false,
-        authError: null,
-      })
+      });
+      return {};
+    } catch (err: any) {
+      const message = err.message ?? 'Login gagal';
+      setState((s) => ({ ...s, isLoading: false, authError: message }));
+      return { error: message };
     }
   }
 
-  React.useEffect(() => {
-    let ignore = false
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!ignore) handleSession(session)
-    })
-
-    const { data: { subscription } } =
-      supabase.auth.onAuthStateChange((_event, session) => {
-        if (!ignore) handleSession(session)
-      })
-
-    return () => {
-      ignore = true
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  async function signIn(email: string, password: string) {
-    setState((s) => ({ ...s, isLoading: true, authError: null }))
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setState((s) => ({ ...s, isLoading: false, authError: error.message }))
-      return { error: error.message }
-    }
-
-    const { data } = await supabase.auth.getSession()
-    await handleSession(data.session)
-    return {}
-  }
-
-  async function signOut() {
-    await supabase.auth.signOut()
-    requestIdRef.current++
+  function signOut() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('auth_user');
     setState({
-      session: null,
       user: null,
       role: null,
       fullName: null,
       isAuthenticated: false,
       isLoading: false,
       authError: null,
-    })
+    });
   }
 
   return (
     <AuthContext.Provider value={{ ...state, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
-  )
+  );
 }

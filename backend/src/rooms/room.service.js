@@ -54,3 +54,13 @@ export const unarchiveRoom = async (roomId) => {
     await getRoomById(roomId);
     return await roomRepo.unarchiveRoom(roomId);
 };
+
+export const setRoomAmenities = async (roomId, amenityIds) => {
+    await getRoomById(roomId);
+    return await roomRepo.replaceRoomAmenities(roomId, amenityIds);
+};
+
+export const setRoomRules = async (roomId, ruleIds) => {
+    await getRoomById(roomId);
+    return await roomRepo.replaceRoomRules(roomId, ruleIds);
+};

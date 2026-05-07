@@ -10,5 +10,7 @@ router.put('/:id', roomController.updateRoom);
 router.delete('/:id', roomController.deleteRoom);
 router.patch('/:id/archive', roomController.archiveRoom);
 router.patch('/:id/unarchive', roomController.unarchiveRoom);
+router.put('/:id/amenities', roomController.updateRoomAmenities);
+router.put('/:id/rules', roomController.updateRoomRules);
 
 export default router;

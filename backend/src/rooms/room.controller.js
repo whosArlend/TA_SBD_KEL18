@@ -121,3 +121,25 @@ export const unarchiveRoom = async (req, res) => {
         });
     }
 };
+
+export const updateRoomAmenities = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { amenity_ids } = req.body; // array of { amenity_id, quantity }
+        await roomService.setRoomAmenities(id, amenity_ids ?? []);
+        return res.status(200).json({ success: true, message: 'Amenities updated' });
+    } catch (error) {
+        return res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+export const updateRoomRules = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { rule_ids } = req.body; // array of rule_id numbers
+        await roomService.setRoomRules(id, rule_ids ?? []);
+        return res.status(200).json({ success: true, message: 'Rules updated' });
+    } catch (error) {
+        return res.status(400).json({ success: false, message: error.message });
+    }
+};

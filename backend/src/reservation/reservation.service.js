@@ -1,6 +1,7 @@
 import * as reservationRepo from './reservation.repository.js';
+import * as roomRepo from '../rooms/room.repository.js';
 
-const VALID_STATUSES = ['Pending', 'Approved', 'Canceled', 'Rescheduled', 'Completed', 'No Show'];
+const VALID_STATUSES = ['Pending', 'Approved', 'Rejected', 'Canceled', 'Return Requested', 'Completed'];
 
 const generateBookingCode = () => {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -21,14 +22,14 @@ export const getReservationById = async (reservationId) => {
 };
 
 export const createNewReservation = async (reservationData) => {
-    const { user_id, room_id, meeting_title, person_in_charge, start_time, end_time } = reservationData;
+    const { user_id, room_id, start_time, end_time, meeting_title, person_in_charge } = reservationData;
 
     if (!user_id) throw new Error('user_id is required');
     if (!room_id) throw new Error('room_id is required');
-    if (!meeting_title) throw new Error('meeting_title is required');
-    if (!person_in_charge) throw new Error('person_in_charge is required');
     if (!start_time) throw new Error('start_time is required');
     if (!end_time) throw new Error('end_time is required');
+    if (!meeting_title) throw new Error('meeting_title is required');
+    if (!person_in_charge) throw new Error('person_in_charge is required');
 
     const start = new Date(start_time);
     const end = new Date(end_time);
@@ -39,9 +40,6 @@ export const createNewReservation = async (reservationData) => {
     if (start >= end) {
         throw new Error('start_time must be before end_time');
     }
-    if (start <= new Date()) {
-        throw new Error('start_time must be in the future');
-    }
 
     const conflicts = await reservationRepo.findOverlappingReservations(room_id, start_time, end_time);
     if (conflicts.length > 0) {
@@ -51,10 +49,10 @@ export const createNewReservation = async (reservationData) => {
     const payload = {
         user_id,
         room_id,
-        meeting_title,
-        person_in_charge,
         start_time,
         end_time,
+        meeting_title,
+        person_in_charge,
         status: 'Pending',
         booking_code: generateBookingCode(),
     };
@@ -99,7 +97,7 @@ export const editReservation = async (reservationId, reservationData) => {
 };
 
 export const updateReservationStatus = async (reservationId, { status, notes_from_admin }) => {
-    await getReservationById(reservationId);
+    const reservation = await getReservationById(reservationId);
 
     if (!status) throw new Error('status is required');
     if (!VALID_STATUSES.includes(status)) {
@@ -111,7 +109,18 @@ export const updateReservationStatus = async (reservationId, { status, notes_fro
         payload.notes_from_admin = notes_from_admin;
     }
 
-    return await reservationRepo.updateReservation(reservationId, payload);
+    const updated = await reservationRepo.updateReservation(reservationId, payload);
+
+    // Update status ruangan sesuai hasil keputusan reservasi
+    if (status === 'Approved') {
+        await roomRepo.updateRoom(reservation.room_id, { status: 'Occupied' });
+    } else if (status === 'Rejected') {
+        await roomRepo.updateRoom(reservation.room_id, { status: 'Available' });
+    } else if (status === 'Completed') {
+        await roomRepo.updateRoom(reservation.room_id, { status: 'Available' });
+    }
+
+    return updated;
 };
 
 export const cancelReservation = async (reservationId) => {
@@ -122,7 +131,9 @@ export const cancelReservation = async (reservationId) => {
         throw new Error(`Cannot cancel a reservation with status '${existing.status}'`);
     }
 
-    return await reservationRepo.updateReservation(reservationId, { status: 'Canceled' });
+    const cancelled = await reservationRepo.updateReservation(reservationId, { status: 'Canceled' });
+    await roomRepo.updateRoom(existing.room_id, { status: 'Available' });
+    return cancelled;
 };
 
 export const removeReservation = async (reservationId) => {

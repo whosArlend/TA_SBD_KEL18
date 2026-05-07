@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 import { Building2, CalendarCheck, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
+import * as api from '../lib/api';
 
 export default function AdminDashboard() {
   const auth = useAuth() as any;
@@ -11,25 +11,23 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ rooms: 0, activeBookings: 0, pending: 0 });
 
   useEffect(() => {
-    const fetchDashboardStats = async () => {
+    const fetchStats = async () => {
       try {
-        // Hitung total rooms
-        const { count: roomCount } = await supabase.from('rooms').select('*', { count: 'exact', head: true });
-        // Hitung pending requests
-        const { count: pendingCount } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-        // Hitung active bookings (contoh: approved)
-        const { count: activeCount } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'approved');
-
+        const [rooms, pending, approved] = await Promise.all([
+          api.getRooms(),
+          api.getReservations({ status: 'Pending' }),
+          api.getReservations({ status: 'Approved' }),
+        ]);
         setStats({
-          rooms: roomCount || 0,
-          activeBookings: activeCount || 0,
-          pending: pendingCount || 0
+          rooms: rooms.filter((r) => r.archived_at === null).length,
+          activeBookings: approved.length,
+          pending: pending.length,
         });
-      } catch (error) {
-        console.error('Error fetching stats:', error);
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
       }
     };
-    fetchDashboardStats();
+    fetchStats();
   }, []);
 
   return (
@@ -46,7 +44,7 @@ export default function AdminDashboard() {
               <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center"><Building2 size={24} /></div>
             </div>
             <div>
-              <p className="text-slate-500 font-medium mb-1">Total Rooms (DB)</p>
+              <p className="text-slate-500 font-medium mb-1">Total Rooms (Active)</p>
               <h2 className="text-4xl font-bold text-slate-900">{stats.rooms}</h2>
             </div>
           </div>
@@ -56,7 +54,7 @@ export default function AdminDashboard() {
               <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center"><CalendarCheck size={24} /></div>
             </div>
             <div>
-              <p className="text-slate-500 font-medium mb-1">Active Bookings</p>
+              <p className="text-slate-500 font-medium mb-1">Active Bookings (Approved)</p>
               <h2 className="text-4xl font-bold text-slate-900">{stats.activeBookings}</h2>
             </div>
           </div>
@@ -72,12 +70,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* RESTORED ROOM SCHEDULE UI */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-1">Room Schedule</h2>
-              <p className="text-sm text-slate-500">Weekly overview for Floor 1-12</p>
+              <p className="text-sm text-slate-500">Weekly overview</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 font-semibold text-sm text-slate-800">

@@ -23,13 +23,22 @@ export const findAllRooms = async () => {
 export const findRoomById = async (roomId) => {
     const { data, error } = await supabase
         .from('rooms')
-        .select('*')
+        .select(`
+            *,
+            room_amenities_map (
+                quantity,
+                amenities ( amenity_id, amenity_name )
+            ),
+            room_rules_map (
+                rules ( rule_id, rule_name )
+            )
+        `)
         .eq('room_id', roomId)
         .is('deleted_at', null)
         .single();
 
     if (error) {
-        if (error.code === 'PGRST116') return null; // PostgREST code for "not found"
+        if (error.code === 'PGRST116') return null;
         console.error('Supabase Error (findRoomById):', error);
         throw error;
     }
@@ -72,21 +81,22 @@ export const updateRoom = async (roomId, roomData) => {
 };
 
 /**
- * Soft delete a room
+ * Permanently delete a room and its related mappings
  */
 export const deleteRoom = async (roomId) => {
-    const { data, error } = await supabase
+    // Delete related mappings first to avoid FK constraint errors
+    await supabase.from('room_amenities_map').delete().eq('room_id', roomId);
+    await supabase.from('room_rules_map').delete().eq('room_id', roomId);
+
+    const { error } = await supabase
         .from('rooms')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('room_id', roomId)
-        .select()
-        .single();
+        .delete()
+        .eq('room_id', roomId);
 
     if (error) {
         console.error('Supabase Error (deleteRoom):', error);
         throw error;
     }
-    return data;
 };
 
 /**
@@ -130,4 +140,45 @@ export const unarchiveRoom = async (roomId) => {
         throw error;
     }
     return data;
+};
+
+/**
+ * Replace all amenities for a room
+ * amenityIds: array of { amenity_id, quantity }
+ */
+export const replaceRoomAmenities = async (roomId, amenityIds) => {
+    // Delete existing
+    const { error: delError } = await supabase
+        .from('room_amenities_map')
+        .delete()
+        .eq('room_id', roomId);
+    if (delError) throw delError;
+
+    if (!amenityIds || amenityIds.length === 0) return;
+
+    const rows = amenityIds.map(({ amenity_id, quantity }) => ({
+        room_id: roomId,
+        amenity_id,
+        quantity: quantity ?? 1,
+    }));
+    const { error } = await supabase.from('room_amenities_map').insert(rows);
+    if (error) throw error;
+};
+
+/**
+ * Replace all rules for a room
+ * ruleIds: array of rule_id numbers
+ */
+export const replaceRoomRules = async (roomId, ruleIds) => {
+    const { error: delError } = await supabase
+        .from('room_rules_map')
+        .delete()
+        .eq('room_id', roomId);
+    if (delError) throw delError;
+
+    if (!ruleIds || ruleIds.length === 0) return;
+
+    const rows = ruleIds.map((rule_id) => ({ room_id: roomId, rule_id }));
+    const { error } = await supabase.from('room_rules_map').insert(rows);
+    if (error) throw error;
 };

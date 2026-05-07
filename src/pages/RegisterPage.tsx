@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TextField from '../components/TextField'
-import { supabase } from '../lib/supabase'
+import { registerApi } from '../lib/api'
 
 type FieldKey = 'fullName' | 'nid' | 'email' | 'password' | 'confirmPassword'
 
@@ -121,38 +121,7 @@ export default function RegisterPage() {
   const [apiError, setApiError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState(false)
 
-  const [nimExists, setNimExists] = React.useState(false)
-  const [checkingNim, setCheckingNim] = React.useState(false)
-
-  // Live Check NIM/NIP
-  React.useEffect(() => {
-    const nim = values.nid.trim()
-    if (nim.length < 5) {
-      setNimExists(false)
-      return
-    }
-
-    const checkNim = async () => {
-      setCheckingNim(true)
-      try {
-        const { data, error } = await supabase.rpc('check_nim_exists', { nim_to_check: nim })
-        if (!error && data) {
-          setNimExists(true)
-        } else {
-          setNimExists(false)
-        }
-      } catch (err) {
-        // ignore
-      } finally {
-        setCheckingNim(false)
-      }
-    }
-
-    const timeoutId = setTimeout(checkNim, 600) // debounce 600ms
-    return () => clearTimeout(timeoutId)
-  }, [values.nid])
-
-  const errors = React.useMemo(() => validate(values, nimExists), [values, nimExists])
+  const errors = React.useMemo(() => validate(values), [values])
   const canSubmit = Object.keys(errors).length === 0
 
   function onBlur(key: FieldKey) {
@@ -179,47 +148,18 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      // Create auth user in Supabase
-      // The database trigger (handle_new_user) will auto-insert into accounts table
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      await registerApi({
+        full_name: values.fullName.trim(),
         email: values.email.trim(),
         password: values.password,
-        options: {
-          data: {
-            full_name: values.fullName.trim(),
-            nim_nip: values.nid.trim(),
-          },
-        },
+        department: values.nid.trim(),
       })
 
-      if (authError) {
-        // Translate common errors to Indonesian
-        const msg =
-          authError.message === 'User already registered'
-            ? 'Email sudah terdaftar. Silakan login.'
-            : authError.message.includes('Database error saving new user')
-              ? 'Pendaftaran gagal. NIM/NIP mungkin sudah terdaftar.'
-              : authError.message
-        setApiError(msg)
-        setLoading(false)
-        return
-      }
-
-      if (!authData.user) {
-        setApiError('Gagal membuat akun. Silakan coba lagi.')
-        setLoading(false)
-        return
-      }
-
       setSuccess(true)
-      setLoading(false)
-
-      // Redirect after showing success
-      setTimeout(() => {
-        navigate('/login')
-      }, 2500)
-    } catch (err) {
-      setApiError('Terjadi kesalahan jaringan. Silakan coba lagi.')
+      setTimeout(() => navigate('/login'), 2500)
+    } catch (err: any) {
+      setApiError(err.message ?? 'Terjadi kesalahan jaringan. Silakan coba lagi.')
+    } finally {
       setLoading(false)
     }
   }
@@ -283,8 +223,8 @@ export default function RegisterPage() {
                 autoComplete="off"
                 inputMode="numeric"
                 required
-                status={fieldStatus('nid', touched, errors, values, checkingNim)}
-                message={touched.nid ? errors.nid : checkingNim ? 'Mengecek ketersediaan...' : undefined}
+                status={fieldStatus('nid', touched, errors, values)}
+                message={touched.nid ? errors.nid : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
