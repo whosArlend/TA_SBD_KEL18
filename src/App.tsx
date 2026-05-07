@@ -22,6 +22,7 @@ import UserActivityPage from './pages/UserActivityPage'
 import RoomDetail from './pages/RoomDetail';
 import ReservationForm from './pages/ReservationForm';
 import QuickBookingPage from './pages/QuickBookingPage';
+import RoomAvailabilityPage from './pages/RoomAvailabilityPage';
 
 function UserOnlyOutlet(): React.ReactElement {
   const { role } = useAuth()
@@ -48,9 +49,10 @@ export default function App() {
             <Route path="/room-catalog/:id" element={<RoomDetailPage />} />
             <Route path="/book-room/:roomId" element={<BookRoomPage />} />
             <Route path="/my-bookings" element={<MyBookingsPage />} />
-            <Route path="/rooms/:roomId" element={<RoomDetail />} />
+            <Route path="/rooms-catalog/:roomId" element={<RoomDetail />} />
             <Route path="/booking/new" element={<ReservationForm />} />
             <Route path="/quick-booking" element={<QuickBookingPage />} />
+            <Route path="/rooms/:roomId" element={<RoomAvailabilityPage />} />
           </Route>
 
           {/* Admin-only routes */}

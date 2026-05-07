@@ -91,7 +91,7 @@ export default function RoomCatalogPage() {
                   <div className="mt-auto flex gap-2">
                     {/* Tombol Detail */}
                     <button
-                      onClick={() => navigate(`/rooms/${room.room_id}`)}
+                      onClick={() => navigate(`/rooms-catalog/${room.room_id}`)}
                       className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition"
                     >
                       <Info size={15} /> Detail
