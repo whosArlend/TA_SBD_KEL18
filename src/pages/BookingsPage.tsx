@@ -20,6 +20,17 @@ export default function BookingsPage() {
   const [requests, setRequests] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [toastMessage, setToastMessage] = useState<{title: string, type: 'success' | 'error'} | null>(null);
+  const [isToastVisible, setIsToastVisible] = useState(false);
+
+  const showToast = (title: string, type: 'success' | 'error') => {
+    setToastMessage({ title, type });
+    setIsToastVisible(true);
+    setTimeout(() => {
+      setIsToastVisible(false);
+      setTimeout(() => setToastMessage(null), 300); // wait for fade out
+    }, 3000);
+  };
 
   useEffect(() => { fetchPending(); }, []);
 
@@ -39,10 +50,10 @@ export default function BookingsPage() {
     setActionLoading(id);
     try {
       await api.updateReservationStatus(id, 'Approved');
-      alert(`Booking dari ${userName} berhasil di-Approve!`);
+      showToast(`Booking dari ${userName} berhasil di-Approve!`, 'success');
       setRequests((prev) => prev.filter((r) => r.reservation_id !== id));
     } catch (err: any) {
-      alert('Gagal: ' + err.message);
+      showToast('Gagal: ' + err.message, 'error');
     } finally {
       setActionLoading(null);
     }
@@ -53,9 +64,10 @@ export default function BookingsPage() {
     setActionLoading(id);
     try {
       await api.updateReservationStatus(id, 'Rejected');
+      showToast(`Booking dari ${userName} berhasil ditolak.`, 'success');
       setRequests((prev) => prev.filter((r) => r.reservation_id !== id));
     } catch (err: any) {
-      alert('Gagal: ' + err.message);
+      showToast('Gagal: ' + err.message, 'error');
     } finally {
       setActionLoading(null);
     }
@@ -63,6 +75,14 @@ export default function BookingsPage() {
 
   return (
     <DashboardLayout role="admin" userName={adminName}>
+      {toastMessage && (
+        <div className={`fixed top-8 right-8 px-6 py-4 rounded-xl shadow-2xl font-medium flex items-center gap-3 z-50 transition-all duration-300 transform ${
+          isToastVisible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
+        } ${toastMessage.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+          {toastMessage.type === 'success' ? <Check size={20} /> : <X size={20} />}
+          {toastMessage.title}
+        </div>
+      )}
       <div className="p-8 max-w-7xl mx-auto">
         <div className="flex justify-between items-start mb-8">
           <div>

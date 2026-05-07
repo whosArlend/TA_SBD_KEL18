@@ -61,7 +61,8 @@ export default function DashboardLayout({ children, role: propRole, userName: pr
         <nav className="flex-1 mt-4">
           {menu.map((item) => {
             const isActivityFeed = activeRole === 'admin' && item.name === 'Dashboard' && location.pathname === '/activity-feed';
-            const isActive = location.pathname === item.path || isActivityFeed;
+            const isRoomCatalogChild = item.name === 'Room Catalog' && (location.pathname.startsWith('/room-catalog') || location.pathname.startsWith('/book-room'));
+            const isActive = location.pathname === item.path || isActivityFeed || isRoomCatalogChild;
             
             return (
               <Link

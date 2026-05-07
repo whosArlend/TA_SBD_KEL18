@@ -1,111 +1,22 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Loader2, Users, Search, X, Info } from 'lucide-react';
+import { Loader2, Users, Search } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Room } from '../lib/api';
-import RoomDetailModal from '../components/RoomDetailModal';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80';
 const roomImg = (room: import('../lib/api').Room) => room.image_url || FALLBACK_IMG;
 
-function BookRoomModal({ room, userId, onClose }: { room: Room; userId: number | null | undefined; onClose: () => void }) {
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [meetingTitle, setMeetingTitle] = useState('');
-  const [personInCharge, setPersonInCharge] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (!userId) { setError('Sesi pengguna tidak valid. Silakan logout dan login kembali.'); return; }
-    if (!startTime || !endTime) { setError('Waktu mulai dan selesai wajib diisi.'); return; }
-    if (new Date(endTime) <= new Date(startTime)) { setError('Waktu selesai harus setelah waktu mulai.'); return; }
-    if (!meetingTitle.trim()) { setError('Judul rapat wajib diisi.'); return; }
-    if (!personInCharge.trim()) { setError('Penanggung jawab wajib diisi.'); return; }
-    setLoading(true);
-    try {
-      await api.createReservation({
-        user_id: userId,
-        room_id: room.room_id,
-        start_time: new Date(startTime).toISOString(),
-        end_time: new Date(endTime).toISOString(),
-        meeting_title: meetingTitle.trim(),
-        person_in_charge: personInCharge.trim(),
-      });
-      setSuccess(true);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <button className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md z-10">
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={20} /></button>
-        {success ? (
-          <div className="text-center py-6">
-            <div className="text-5xl mb-4">🎉</div>
-            <h2 className="text-xl font-bold text-slate-900 mb-2">Booking Terkirim!</h2>
-            <p className="text-slate-500 text-sm mb-6">Permintaan booking <span className="font-bold">{room.room_name}</span> berhasil dikirim dan menunggu persetujuan admin.</p>
-            <button onClick={onClose} className="w-full bg-[#0088FF] text-white py-2.5 rounded-lg font-semibold hover:bg-blue-600 transition">Tutup</button>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-xl font-bold text-slate-900 mb-1">Book Room</h2>
-            <p className="text-slate-500 text-sm mb-6">{room.room_name} · {room.capacity} orang · {room.location || '-'}</p>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Waktu Mulai</label>
-                <input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} required
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#0088FF] focus:ring-4 focus:ring-[#0088FF]/15" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Waktu Selesai</label>
-                <input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} required
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#0088FF] focus:ring-4 focus:ring-[#0088FF]/15" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Judul Rapat / Kegiatan</label>
-                <input type="text" value={meetingTitle} onChange={(e) => setMeetingTitle(e.target.value)} required
-                  placeholder="e.g. Rapat Tim, Seminar, Kuliah..."
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#0088FF] focus:ring-4 focus:ring-[#0088FF]/15" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Penanggung Jawab</label>
-                <input type="text" value={personInCharge} onChange={(e) => setPersonInCharge(e.target.value)} required
-                  placeholder="Nama penanggung jawab kegiatan..."
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#0088FF] focus:ring-4 focus:ring-[#0088FF]/15" />
-              </div>
-              {error && <p className="text-rose-600 text-sm bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{error}</p>}
-              <button type="submit" disabled={loading}
-                className="w-full bg-[#0088FF] text-white py-2.5 rounded-lg font-semibold hover:bg-blue-600 transition disabled:bg-slate-300 disabled:cursor-not-allowed">
-                {loading ? 'Mengirim...' : 'Kirim Permintaan Booking'}
-              </button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function RoomCatalogPage() {
   const auth = useAuth() as any;
   const userName = auth?.fullName || localStorage.getItem('userName') || 'User';
-  const userId = auth?.user?.user_id as number | undefined;
+  const navigate = useNavigate();
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [bookingRoom, setBookingRoom] = useState<Room | null>(null);
-  const [detailRoomId, setDetailRoomId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -146,22 +57,6 @@ export default function RoomCatalogPage() {
           </div>
         </div>
 
-        {bookingRoom && (
-          <BookRoomModal room={bookingRoom} userId={userId} onClose={() => setBookingRoom(null)} />
-        )}
-
-        {detailRoomId !== null && (
-          <RoomDetailModal
-            roomId={detailRoomId}
-            onClose={() => setDetailRoomId(null)}
-            onBook={() => {
-              const room = rooms.find((r) => r.room_id === detailRoomId) ?? null;
-              setDetailRoomId(null);
-              setBookingRoom(room);
-            }}
-          />
-        )}
-
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <Loader2 className="w-8 h-8 animate-spin mb-4 text-[#0088FF]" />
@@ -187,17 +82,10 @@ export default function RoomCatalogPage() {
                   </div>
                   <div className="mt-auto flex gap-2">
                     <button
-                      onClick={() => setDetailRoomId(room.room_id)}
-                      className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition"
-                    >
-                      <Info size={15} /> Detail
-                    </button>
-                    <button
-                      onClick={() => setBookingRoom(room)}
+                      onClick={() => navigate(`/room-catalog/${room.room_id}`)}
                       className="flex-1 bg-[#0088FF] text-white font-semibold py-2.5 rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={room.status !== 'Available'}
                     >
-                      {room.status === 'Available' ? 'Book Now' : 'Tidak Tersedia'}
+                      Check Availability
                     </button>
                   </div>
                 </div>

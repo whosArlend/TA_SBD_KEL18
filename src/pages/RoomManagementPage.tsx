@@ -29,10 +29,11 @@ export default function RoomManagementPage() {
     r.room_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Stats: hitung dari semua ruangan (termasuk archived)
+  // Stats: hitung dari ruangan yang belum diarsipkan
   const totalRooms = rooms.length;
   const availableRooms = rooms.filter((r) => r.status === 'Available').length;
-  const maintenanceRooms = allRooms.filter((r) => r.status === 'Maintenance').length;
+  // Apapun yang tidak available kita hitung sebagai maintenance agar sum totalnya pas
+  const maintenanceRooms = totalRooms - availableRooms; 
   const availability = totalRooms > 0 ? Math.round((availableRooms / totalRooms) * 100) : 0;
 
   useEffect(() => { fetchRooms(); }, []);

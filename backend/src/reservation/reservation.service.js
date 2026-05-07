@@ -111,14 +111,8 @@ export const updateReservationStatus = async (reservationId, { status, notes_fro
 
     const updated = await reservationRepo.updateReservation(reservationId, payload);
 
-    // Update status ruangan sesuai hasil keputusan reservasi
-    if (status === 'Approved') {
-        await roomRepo.updateRoom(reservation.room_id, { status: 'Occupied' });
-    } else if (status === 'Rejected') {
-        await roomRepo.updateRoom(reservation.room_id, { status: 'Available' });
-    } else if (status === 'Completed') {
-        await roomRepo.updateRoom(reservation.room_id, { status: 'Available' });
-    }
+    // Dihapus: Update status ruangan secara global (karena sekarang booking per jam, 
+    // ruangan harus tetap 'Available' di katalog agar orang lain bisa meminjam di jam berbeda)
 
     return updated;
 };
@@ -132,7 +126,6 @@ export const cancelReservation = async (reservationId) => {
     }
 
     const cancelled = await reservationRepo.updateReservation(reservationId, { status: 'Canceled' });
-    await roomRepo.updateRoom(existing.room_id, { status: 'Available' });
     return cancelled;
 };
 
