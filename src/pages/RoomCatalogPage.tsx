@@ -205,12 +205,19 @@ export default function RoomCatalogPage() {
                       <Info size={15} /> Detail
                     </button>
                     <button
-                      onClick={() => setBookingRoom(room)}
+                      onClick={() => navigate(`/booking/new?room_id=${room.room_id}`)}
                       className="flex-1 bg-[#0088FF] text-white font-semibold py-2.5 rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={room.status !== 'Available'}
                     >
                       {room.status === 'Available' ? 'Book Now' : 'Tidak Tersedia'}
                     </button>
+                    {/* <button
+                      onClick={() => setBookingRoom(room)}
+                      className="flex-1 bg-[#0088FF] text-white font-semibold py-2.5 rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={room.status !== 'Available'}
+                    >
+                      {room.status === 'Available' ? 'Book Now' : 'Tidak Tersedia'}
+                    </button> */}
                   </div>
                 </div>
               </div>

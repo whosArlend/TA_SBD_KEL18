@@ -82,7 +82,7 @@ export default function DashboardLayout({ children, role: propRole, userName: pr
 
         <div className="p-4 border-t border-slate-800/50">
           {activeRole === 'user' && (
-            <button className="w-full mb-4 bg-[#0088FF] text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition flex items-center justify-center gap-2">
+            <button onClick={() => navigate('/room-catalog')} className="w-full mb-4 bg-[#0088FF] text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition flex items-center justify-center gap-2">
               <span className="text-lg">⊕</span> Book Now
             </button>
           )}
