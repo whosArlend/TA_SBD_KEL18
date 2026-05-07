@@ -19,7 +19,7 @@ export default function BookingsPage() {
 
   const [requests, setRequests] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
 
   useEffect(() => { fetchPending(); }, []);
 
@@ -35,7 +35,7 @@ export default function BookingsPage() {
     }
   };
 
-  const handleApprove = async (id: string, userName: string) => {
+  const handleApprove = async (id: number, userName: string) => {
     setActionLoading(id);
     try {
       await api.updateReservationStatus(id, 'Approved');
@@ -48,7 +48,7 @@ export default function BookingsPage() {
     }
   };
 
-  const handleReject = async (id: string, userName: string) => {
+  const handleReject = async (id: number, userName: string) => {
     if (!window.confirm(`Tolak booking dari ${userName}?`)) return;
     setActionLoading(id);
     try {

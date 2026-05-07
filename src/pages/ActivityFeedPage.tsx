@@ -20,7 +20,7 @@ export default function ActivityFeedPage() {
 
   const [activities, setActivities] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [markedRead, setMarkedRead] = useState<Set<string>>(new Set());
+  const [markedRead, setMarkedRead] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const fetchActivities = async () => {
