@@ -20,6 +20,18 @@ export default function BookingsPage() {
   const [requests, setRequests] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<{ id: number; userName: string } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{title: string, type: 'success' | 'error'} | null>(null);
+  const [isToastVisible, setIsToastVisible] = useState(false);
+
+  const showToast = (title: string, type: 'success' | 'error') => {
+    setToastMessage({ title, type });
+    setIsToastVisible(true);
+    setTimeout(() => {
+      setIsToastVisible(false);
+      setTimeout(() => setToastMessage(null), 300); // wait for fade out
+    }, 3000);
+  };
 
   useEffect(() => { fetchPending(); }, []);
 
@@ -39,23 +51,30 @@ export default function BookingsPage() {
     setActionLoading(id);
     try {
       await api.updateReservationStatus(id, 'Approved');
-      alert(`Booking dari ${userName} berhasil di-Approve!`);
+      showToast(`Booking dari ${userName} berhasil di-Approve!`, 'success');
       setRequests((prev) => prev.filter((r) => r.reservation_id !== id));
     } catch (err: any) {
-      alert('Gagal: ' + err.message);
+      showToast('Gagal: ' + err.message, 'error');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleReject = async (id: number, userName: string) => {
-    if (!window.confirm(`Tolak booking dari ${userName}?`)) return;
+  const handleReject = (id: number, userName: string) => {
+    setRejectTarget({ id, userName });
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
+    const { id, userName } = rejectTarget;
     setActionLoading(id);
     try {
       await api.updateReservationStatus(id, 'Rejected');
+      showToast(`Booking dari ${userName} berhasil ditolak.`, 'success');
       setRequests((prev) => prev.filter((r) => r.reservation_id !== id));
+      setRejectTarget(null);
     } catch (err: any) {
-      alert('Gagal: ' + err.message);
+      showToast('Gagal: ' + err.message, 'error');
     } finally {
       setActionLoading(null);
     }
@@ -63,11 +82,38 @@ export default function BookingsPage() {
 
   return (
     <DashboardLayout role="admin" userName={adminName}>
+      {toastMessage && (
+        <div className={`fixed top-8 right-8 px-6 py-4 rounded-xl shadow-2xl font-medium flex items-center gap-3 z-50 transition-all duration-300 transform ${
+          isToastVisible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
+        } ${toastMessage.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+          {toastMessage.type === 'success' ? <Check size={20} /> : <X size={20} />}
+          {toastMessage.title}
+        </div>
+      )}
       <div className="p-8 max-w-7xl mx-auto">
+        {/* Reject Confirmation Modal */}
+        {rejectTarget && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+            <button className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setRejectTarget(null)} />
+            <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm z-10 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <X size={32} strokeWidth={2.5} />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Tolak Booking?</h2>
+              <p className="text-slate-500 mb-6 text-sm">Apakah Anda yakin ingin menolak permintaan reservasi dari <span className="font-bold text-slate-800">{rejectTarget.userName}</span>?</p>
+              <div className="flex gap-3">
+                <button onClick={() => setRejectTarget(null)} className="flex-1 border border-slate-300 rounded-lg py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Batal</button>
+                <button onClick={confirmReject} disabled={actionLoading !== null} className="flex-1 bg-rose-600 text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-rose-700 disabled:opacity-50 transition">
+                  {actionLoading !== null ? 'Memproses...' : 'Tolak'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex justify-between items-start mb-8">
           <div>
             <h1 className="text-[32px] font-bold text-slate-900 mb-2">Booking Approvals</h1>
-            <p className="text-slate-500 text-[15px]">Review and manage pending room reservation requests.</p>
+            <p className="text-slate-500 text-[15px]">Tinjau dan kelola permintaan reservasi ruangan yang masuk.</p>
           </div>
           <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
             <Filter size={18} /> Filter: All Pending

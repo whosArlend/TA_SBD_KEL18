@@ -12,11 +12,17 @@ import RegisterPage from './pages/RegisterPage'
 import UserDashboard from './pages/UserDashboard'
 import RoomManagementPage from './pages/RoomManagementPage'
 import RoomCatalogPage from './pages/RoomCatalogPage'
+import RoomDetailPage from './pages/RoomDetailPage'
+import BookRoomPage from './pages/BookRoomPage'
 import MyBookingsPage from './pages/MyBookingsPage'
 import HelpCenterPage from './pages/HelpCenter'
 import AdminRoute from './routes/AdminRoute'
 import ProtectedRoute from './routes/ProtectedRoute'
 import UserActivityPage from './pages/UserActivityPage'
+import RoomDetail from './pages/RoomDetail';
+import ReservationForm from './pages/ReservationForm';
+import QuickBookingPage from './pages/QuickBookingPage';
+import RoomAvailabilityPage from './pages/RoomAvailabilityPage';
 
 function UserOnlyOutlet(): React.ReactElement {
   const { role } = useAuth()
@@ -31,6 +37,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        
 
         {/* Routes: wajib login */}
         <Route element={<ProtectedRoute />}>
@@ -39,7 +46,13 @@ export default function App() {
             <Route path="/user-dashboard" element={<UserDashboard />} />
             <Route path="/user-activity" element={<UserActivityPage />} />
             <Route path="/room-catalog" element={<RoomCatalogPage />} />
+            <Route path="/room-catalog/:id" element={<RoomDetailPage />} />
+            <Route path="/book-room/:roomId" element={<BookRoomPage />} />
             <Route path="/my-bookings" element={<MyBookingsPage />} />
+            <Route path="/rooms-catalog/:roomId" element={<RoomDetail />} />
+            <Route path="/booking/new" element={<ReservationForm />} />
+            <Route path="/quick-booking" element={<QuickBookingPage />} />
+            <Route path="/rooms/:roomId" element={<RoomAvailabilityPage />} />
           </Route>
 
           {/* Admin-only routes */}

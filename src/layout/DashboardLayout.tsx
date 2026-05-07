@@ -61,7 +61,8 @@ export default function DashboardLayout({ children, role: propRole, userName: pr
         <nav className="flex-1 mt-4">
           {menu.map((item) => {
             const isActivityFeed = activeRole === 'admin' && item.name === 'Dashboard' && location.pathname === '/activity-feed';
-            const isActive = location.pathname === item.path || isActivityFeed;
+            const isRoomCatalogChild = item.name === 'Room Catalog' && (location.pathname.startsWith('/room-catalog') || location.pathname.startsWith('/book-room'));
+            const isActive = location.pathname === item.path || isActivityFeed || isRoomCatalogChild;
             
             return (
               <Link
@@ -82,7 +83,7 @@ export default function DashboardLayout({ children, role: propRole, userName: pr
 
         <div className="p-4 border-t border-slate-800/50">
           {activeRole === 'user' && (
-            <button className="w-full mb-4 bg-[#0088FF] text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition flex items-center justify-center gap-2">
+            <button onClick={() => navigate('/quick-booking')} className="w-full mb-4 bg-[#0088FF] text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition flex items-center justify-center gap-2">
               <span className="text-lg">⊕</span> Book Now
             </button>
           )}
