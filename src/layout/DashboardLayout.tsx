@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { 
-  Search, Bell, HelpCircle, LogOut, LayoutDashboard, 
+import {
+  Bell, HelpCircle, LogOut, LayoutDashboard,
   Archive, History, BookOpen, Bookmark, Building2, ClipboardList
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext'
@@ -100,17 +100,7 @@ export default function DashboardLayout({ children, role: propRole, userName: pr
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="h-20 bg-white flex items-center justify-between px-8 border-b border-slate-200">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide mr-8">Tekspace</h2>
-            <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-lg w-96 border border-slate-200">
-              <Search size={18} className="text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Search rooms or bookings..." 
-                className="bg-transparent border-none outline-none w-full text-sm text-slate-700 placeholder:text-slate-400" 
-              />
-            </div>
-          </div>
+          <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide">Tekspace</h2>
           
           <div className="flex items-center gap-6">
             <button 

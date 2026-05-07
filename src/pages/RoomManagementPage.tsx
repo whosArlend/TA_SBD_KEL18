@@ -3,7 +3,7 @@ import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
 import AddRoomModal from '../components/AddRoomModal';
 import EditRoomModal from '../components/EditRoomModal';
-import { Loader2, Archive, Pencil } from 'lucide-react';
+import { Loader2, Archive, Pencil, Search } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Room } from '../lib/api';
 import type { AddRoomValues } from '../components/AddRoomModal';
@@ -19,9 +19,15 @@ export default function RoomManagementPage() {
   const [archiveTarget, setArchiveTarget] = useState<Room | null>(null);
   const [archiveReason, setArchiveReason] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Tabel: hanya tampilkan yang belum diarsipkan
   const rooms = allRooms.filter((r) => r.archived_at === null);
+
+  // Filter berdasarkan search
+  const filteredRooms = rooms.filter((r) =>
+    r.room_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Stats: hitung dari semua ruangan (termasuk archived)
   const totalRooms = rooms.length;
@@ -162,9 +168,23 @@ export default function RoomManagementPage() {
 
         {/* Table */}
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
             <h2 className="text-lg font-semibold text-slate-900">Inventory List</h2>
-            <span className="text-sm text-slate-500">{rooms.length} rooms (from API)</span>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari nama ruangan..."
+                  className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg w-56 focus:outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15"
+                />
+              </div>
+              <span className="text-sm text-slate-500 whitespace-nowrap">
+                {filteredRooms.length} rooms
+              </span>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -180,7 +200,7 @@ export default function RoomManagementPage() {
               <tbody>
                 {isLoading ? (
                   <tr><td colSpan={5} className="py-8 text-center text-slate-500"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0065A1]" />Loading rooms...</td></tr>
-                ) : rooms.length > 0 ? rooms.map((room) => (
+                ) : filteredRooms.length > 0 ? filteredRooms.map((room) => (
                   <tr key={room.room_id} className="border-b border-slate-100 last:border-b-0">
                     <td className="py-4">
                       <div className="font-bold text-slate-800">{room.room_name}</div>
@@ -214,7 +234,9 @@ export default function RoomManagementPage() {
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={5} className="py-12 text-center text-slate-500">Belum ada ruangan. Klik "+ Add New Room" untuk menambah.</td></tr>
+                  <tr><td colSpan={5} className="py-12 text-center text-slate-500">
+                    {searchQuery ? `Tidak ada ruangan dengan nama "${searchQuery}".` : 'Belum ada ruangan. Klik "+ Add New Room" untuk menambah.'}
+                  </td></tr>
                 )}
               </tbody>
             </table>

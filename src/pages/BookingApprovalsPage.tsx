@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, Clock3, CornerDownLeft, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock3, CornerDownLeft, Loader2, Search } from 'lucide-react';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../lib/api';
@@ -22,6 +22,7 @@ export default function BookingApprovalsPage() {
   const [returnList, setReturnList] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 4;
 
@@ -72,13 +73,23 @@ export default function BookingApprovalsPage() {
     }
   };
 
-  const displayList = activeTab === 'pending' ? pendingList : returnList;
+  const rawList = activeTab === 'pending' ? pendingList : returnList;
+
+  const displayList = rawList.filter((r) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      r.users?.full_name?.toLowerCase().includes(q) ||
+      r.rooms?.room_name?.toLowerCase().includes(q)
+    );
+  });
+
   const totalPages = Math.max(1, Math.ceil(displayList.length / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const currentData = displayList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   useEffect(() => {
     setCurrentPage(1);
+    setSearchQuery('');
   }, [activeTab]);
 
   useEffect(() => {
@@ -155,12 +166,24 @@ export default function BookingApprovalsPage() {
 
         {/* Table */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 md:flex-row md:items-center md:justify-between">
             <h2 className="text-lg font-bold text-slate-900">
               {activeTab === 'pending' ? 'Antrian Booking' : 'Antrian Pengembalian'}
             </h2>
-            <div className="text-sm text-slate-500 font-medium">
-              Showing {currentData.length > 0 ? startIndex + 1 : 0}–{Math.min(startIndex + ITEMS_PER_PAGE, displayList.length)} of {displayList.length}
+            <div className="flex items-center gap-4">
+              <div className="relative w-64">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  placeholder="Cari user atau ruangan..."
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15"
+                />
+              </div>
+              <span className="text-sm text-slate-500 font-medium whitespace-nowrap">
+                {currentData.length > 0 ? startIndex + 1 : 0}–{Math.min(startIndex + ITEMS_PER_PAGE, displayList.length)} / {displayList.length}
+              </span>
             </div>
           </div>
 
