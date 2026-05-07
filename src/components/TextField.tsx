@@ -29,20 +29,22 @@ const baseInput =
 function variantClasses(variant: FieldVariant) {
   switch (variant) {
     case 'filled':
-      return 'bg-slate-50 border-slate-300'
+      return 'bg-slate-50'
     default:
-      return 'bg-white border-slate-200'
+      return 'bg-white'
   }
 }
 
-function statusClasses(status: FieldStatus) {
+function statusClasses(status: FieldStatus, variant: FieldVariant) {
   switch (status) {
     case 'error':
-      return 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/15'
+      return 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/15'
     case 'success':
-      return 'border-emerald-300 focus:border-emerald-500 focus:ring-emerald-500/15'
+      return 'border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/15'
     default:
-      return 'border-slate-200 focus:border-sky-600 focus:ring-sky-600/15'
+      return variant === 'filled'
+        ? 'border-slate-300 focus:border-sky-600 focus:ring-sky-600/15'
+        : 'border-slate-200 focus:border-sky-600 focus:ring-sky-600/15'
   }
 }
 
@@ -103,7 +105,7 @@ export default function TextField({
           className={[
             baseInput,
             variantClasses(variant),
-            statusClasses(status),
+            statusClasses(status, variant),
             disabled ? 'cursor-not-allowed bg-slate-50 text-slate-500' : '',
             rightElement ? 'pr-11' : '',
           ].join(' ')}

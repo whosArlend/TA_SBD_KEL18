@@ -104,13 +104,6 @@ export default function LoginPage() {
 
     try {
       const identifier = values.identifier.trim()
-      const isEmailInput = isEmail(identifier)
-
-      // For now, only email login is supported
-      if (!isEmailInput) {
-        setApiError('Silakan gunakan email untuk login.')
-        return
-      }
 
       setLoading(true)
       const { error } = await signIn(identifier, values.password)

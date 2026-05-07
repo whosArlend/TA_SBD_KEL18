@@ -13,7 +13,7 @@ export type AuthState = {
 };
 
 type AuthContextType = AuthState & {
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signIn: (identifier: string, password: string) => Promise<{ error?: string }>;
   signOut: () => void;
 };
 
@@ -48,10 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authError: null,
   });
 
-  async function signIn(email: string, password: string): Promise<{ error?: string }> {
+  async function signIn(identifier: string, password: string): Promise<{ error?: string }> {
     setState((s) => ({ ...s, isLoading: true, authError: null }));
     try {
-      const { token, user } = await loginApi(email, password);
+      const { token, user } = await loginApi(identifier, password);
       localStorage.setItem('token', token);
       localStorage.setItem('auth_user', JSON.stringify(user));
       setState({

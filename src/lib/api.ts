@@ -146,10 +146,10 @@ export const uploadRoomImage = async (file: File): Promise<string> => {
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
-export const loginApi = (email: string, password: string) =>
+export const loginApi = (identifier: string, password: string) =>
   apiFetch<{ token: string; user: AuthUser }>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
   });
 
 export const registerApi = (data: {
@@ -161,6 +161,18 @@ export const registerApi = (data: {
   apiFetch<{ token: string; user: AuthUser }>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
+  });
+
+export const checkNimApi = (nim: string) =>
+  apiFetch<{ exists: boolean }>('/auth/check-nim', {
+    method: 'POST',
+    body: JSON.stringify({ nim }),
+  });
+
+export const checkEmailApi = (email: string) =>
+  apiFetch<{ exists: boolean }>('/auth/check-email', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
   });
 
 // ─── Rooms ────────────────────────────────────────────────────────────────────

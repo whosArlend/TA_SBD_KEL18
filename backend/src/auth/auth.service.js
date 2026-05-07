@@ -26,12 +26,18 @@ function signToken(user) {
     );
 }
 
-export const login = async (email, password) => {
-    const user = await authRepo.findUserByEmail(email);
-    if (!user) throw new Error('Email atau password salah');
+export const login = async (identifier, password) => {
+    let user;
+    if (identifier.includes('@')) {
+        user = await authRepo.findUserByEmail(identifier);
+    } else {
+        user = await authRepo.findUserByDepartment(identifier);
+    }
+    
+    if (!user) throw new Error('Email/NIM atau password salah');
 
     const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) throw new Error('Email atau password salah');
+    if (!match) throw new Error('Email/NIM atau password salah');
 
     const token = signToken(user);
     const { password_hash, ...safeUser } = user;
@@ -51,4 +57,14 @@ export const register = async ({ full_name, email, password, department }) => {
 
     const token = signToken(user);
     return { token, user: { ...user, role: normalizeRole(user.role) } };
+};
+
+export const checkNim = async (nim) => {
+    const exists = await authRepo.departmentExists(nim);
+    return { exists };
+};
+
+export const checkEmail = async (email) => {
+    const exists = await authRepo.emailExists(email);
+    return { exists };
 };

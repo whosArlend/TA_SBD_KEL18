@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TextField from '../components/TextField'
-import { registerApi } from '../lib/api'
+import { registerApi, checkNimApi, checkEmailApi } from '../lib/api'
 
 type FieldKey = 'fullName' | 'nid' | 'email' | 'password' | 'confirmPassword'
 
@@ -25,7 +25,7 @@ function hasSpecialChar(value: string) {
   return /[^A-Za-z0-9]/.test(value)
 }
 
-function validate(values: FormState, nimExists: boolean = false): FormErrors {
+function validate(values: FormState, nimExists: boolean = false, emailExists: boolean = false): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.fullName.trim()) errors.fullName = 'Nama lengkap wajib diisi.'
@@ -38,6 +38,7 @@ function validate(values: FormState, nimExists: boolean = false): FormErrors {
 
   if (!values.email.trim()) errors.email = 'Email wajib diisi.'
   else if (!isEmail(values.email)) errors.email = 'Format email tidak valid.'
+  else if (emailExists) errors.email = 'Email sudah terdaftar.'
 
   if (!values.password) errors.password = 'Password wajib diisi.'
   else if (values.password.length < 8)
@@ -57,12 +58,14 @@ function fieldStatus(
   touched: TouchedState,
   errors: FormErrors,
   values: FormState,
-  checkingNim?: boolean
+  checkingNim?: boolean,
+  checkingEmail?: boolean
 ) {
-  if (!touched[key]) return 'idle' as const
   if (key === 'nid' && checkingNim) return 'idle' as const
-  if (errors[key]) return 'error' as const
-  if (values[key].trim()) return 'success' as const
+  if (key === 'email' && checkingEmail) return 'idle' as const
+  const isTouchedOrDirty = touched[key] || values[key].trim() !== ''
+  if (errors[key] && isTouchedOrDirty) return 'error' as const
+  if (!errors[key] && values[key].trim() !== '') return 'success' as const
   return 'idle' as const
 }
 
@@ -121,7 +124,67 @@ export default function RegisterPage() {
   const [apiError, setApiError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState(false)
 
-  const errors = React.useMemo(() => validate(values), [values])
+  const [nimExists, setNimExists] = React.useState(false)
+  const [checkingNim, setCheckingNim] = React.useState(false)
+
+  const [emailExists, setEmailExists] = React.useState(false)
+  const [checkingEmail, setCheckingEmail] = React.useState(false)
+
+  // Live Check NIM/NIP
+  React.useEffect(() => {
+    const nim = values.nid.trim()
+    setCheckingNim(true)
+    
+    if (nim.length < 5) {
+      setNimExists(false)
+      setCheckingNim(false)
+      return
+    }
+
+    const checkNim = async () => {
+      try {
+        const { exists } = await checkNimApi(nim)
+        setNimExists(exists)
+      } catch (err) {
+        console.error('Error saat cek NIM ke backend:', err)
+        setNimExists(false)
+      } finally {
+        setCheckingNim(false)
+      }
+    }
+
+    const timeoutId = setTimeout(checkNim, 600) // debounce 600ms
+    return () => clearTimeout(timeoutId)
+  }, [values.nid])
+
+  // Live Check Email
+  React.useEffect(() => {
+    const email = values.email.trim()
+    setCheckingEmail(true)
+    
+    if (!isEmail(email)) {
+      setEmailExists(false)
+      setCheckingEmail(false)
+      return
+    }
+
+    const checkEmail = async () => {
+      try {
+        const { exists } = await checkEmailApi(email)
+        setEmailExists(exists)
+      } catch (err) {
+        console.error('Error saat cek Email ke backend:', err)
+        setEmailExists(false)
+      } finally {
+        setCheckingEmail(false)
+      }
+    }
+
+    const timeoutId = setTimeout(checkEmail, 600) // debounce 600ms
+    return () => clearTimeout(timeoutId)
+  }, [values.email])
+
+  const errors = React.useMemo(() => validate(values, nimExists, emailExists), [values, nimExists, emailExists])
   const canSubmit = Object.keys(errors).length === 0
 
   function onBlur(key: FieldKey) {
@@ -195,7 +258,7 @@ export default function RegisterPage() {
                 autoComplete="name"
                 required
                 status={fieldStatus('fullName', touched, errors, values)}
-                message={touched.fullName ? errors.fullName : undefined}
+                message={(touched.fullName || values.fullName) ? errors.fullName : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 20 20"
@@ -223,8 +286,8 @@ export default function RegisterPage() {
                 autoComplete="off"
                 inputMode="numeric"
                 required
-                status={fieldStatus('nid', touched, errors, values)}
-                message={touched.nid ? errors.nid : undefined}
+                status={fieldStatus('nid', touched, errors, values, checkingNim)}
+                message={checkingNim ? 'Mengecek ketersediaan...' : (touched.nid || values.nid) ? errors.nid : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
@@ -249,9 +312,10 @@ export default function RegisterPage() {
                 onChange={(v) => onChange('email', v)}
                 onBlur={() => onBlur('email')}
                 autoComplete="email"
+                inputMode="email"
                 required
-                status={fieldStatus('email', touched, errors, values)}
-                message={touched.email ? errors.email : undefined}
+                status={fieldStatus('email', touched, errors, values, undefined, checkingEmail)}
+                message={checkingEmail ? 'Mengecek ketersediaan...' : (touched.email || values.email) ? errors.email : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
@@ -277,9 +341,8 @@ export default function RegisterPage() {
                 onBlur={() => onBlur('password')}
                 autoComplete="new-password"
                 required
-                hint="Minimal 8 karakter dan 1 karakter spesial."
                 status={fieldStatus('password', touched, errors, values)}
-                message={touched.password ? errors.password : undefined}
+                message={(values.password !== '') ? errors.password : 'Minimal 8 karakter dan 1 karakter spesial.'}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
@@ -306,9 +369,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 required
                 status={fieldStatus('confirmPassword', touched, errors, values)}
-                message={
-                  touched.confirmPassword ? errors.confirmPassword : undefined
-                }
+                message={(values.confirmPassword !== '') ? errors.confirmPassword : undefined}
                 leftIcon={
                   <svg
                     viewBox="0 0 24 24"
@@ -326,19 +387,19 @@ export default function RegisterPage() {
               />
 
               {success ? (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                  ✅ Registrasi berhasil! Silakan cek email untuk verifikasi. Mengalihkan ke halaman login...
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm flex items-center gap-3">
+                  <span className="text-xl">✅</span> Registrasi berhasil! Mengalihkan ke halaman login...
                 </div>
               ) : null}
 
               {apiError ? (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                  {apiError}
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm flex items-center gap-3">
+                  <span className="text-xl">❌</span> {apiError}
                 </div>
               ) : null}
 
               {submitted && !canSubmit && !apiError ? (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
                   Periksa kembali input yang masih bermasalah.
                 </div>
               ) : null}
@@ -346,18 +407,18 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading || success}
-                className="mt-2 h-11 w-full rounded-md bg-sky-800 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-900 focus:outline-none focus:ring-4 focus:ring-sky-600/20 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="mt-6 h-12 w-full rounded-xl bg-gradient-to-r from-sky-700 to-sky-900 text-sm font-bold tracking-wide text-white shadow-[0_8px_20px_rgba(3,105,161,0.3)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgba(3,105,161,0.4)] focus:outline-none focus:ring-4 focus:ring-sky-600/30 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
               >
-                {loading ? 'Mendaftarkan...' : success ? 'Berhasil ✓' : 'Register'}
+                {loading ? 'Memproses...' : success ? 'Berhasil ✓' : 'Register Account'}
               </button>
 
-              <p className="pt-5 text-center text-sm text-slate-600">
+              <p className="pt-6 text-center text-sm font-medium text-slate-600">
                 Already have an account?{' '}
                 <Link
                   to="/login"
-                  className="font-semibold text-sky-700 underline-offset-4 hover:underline focus:outline-none focus:ring-4 focus:ring-sky-600/15"
+                  className="font-bold text-sky-700 hover:text-sky-900 hover:underline underline-offset-4 focus:outline-none focus:ring-4 focus:ring-sky-600/15 transition-colors"
                 >
-                  Login
+                  Sign in instead
                 </Link>
               </p>
             </form>
