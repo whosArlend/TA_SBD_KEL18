@@ -245,6 +245,15 @@ export const updateReservationStatus = (
 export const cancelReservation = (id: number | string) =>
   apiFetch<Reservation>(`/reservations/${id}/cancel`, { method: 'PATCH' });
 
+export const updateReservation = (
+  id: number | string,
+  data: { start_time?: string; end_time?: string; meeting_title?: string; person_in_charge?: string },
+) =>
+  apiFetch<Reservation>(`/reservations/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
 export const requestReturn = (id: number | string) =>
   apiFetch<Reservation>(`/reservations/${id}/status`, {
     method: 'PATCH',

@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase.js';
+import { supabaseAdmin as supabase } from '../lib/supabase-admin.js';
 
 /**
  * Get all active reservations with optional filters

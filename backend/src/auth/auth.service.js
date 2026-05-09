@@ -49,10 +49,13 @@ export const register = async ({ full_name, email, password, department }) => {
     if (!email) throw new Error('Email wajib diisi');
     if (!password || password.length < 8) throw new Error('Password minimal 8 karakter');
 
-    const exists = await authRepo.emailExists(email);
+    // Jalankan email check dan password hashing secara paralel untuk mempersingkat waktu
+    const [exists, password_hash] = await Promise.all([
+        authRepo.emailExists(email),
+        bcrypt.hash(password, 8),
+    ]);
     if (exists) throw new Error('Email sudah terdaftar');
 
-    const password_hash = await bcrypt.hash(password, 10);
     const user = await authRepo.createUser({ full_name, email, password_hash, department });
 
     const token = signToken(user);

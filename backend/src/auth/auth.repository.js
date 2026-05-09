@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase.js';
+import { supabaseAdmin as supabase } from '../lib/supabase-admin.js';
 
 export const findUserByEmail = async (email) => {
     const { data, error } = await supabase

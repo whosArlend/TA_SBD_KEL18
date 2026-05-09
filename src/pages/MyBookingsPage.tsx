@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../layout/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Loader2, CalendarClock, XCircle, CornerDownLeft } from 'lucide-react';
+import { Loader2, CalendarClock, XCircle, CornerDownLeft, Pencil, X } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Reservation } from '../lib/api';
 
@@ -51,6 +51,12 @@ export default function MyBookingsPage() {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('All');
 
+  // Reschedule modal state
+  const [rescheduleTarget, setRescheduleTarget] = useState<Reservation | null>(null);
+  const [rescheduleForm, setRescheduleForm] = useState({ start_time: '', end_time: '', meeting_title: '', person_in_charge: '' });
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!userId) return;
     const fetchMyBookings = async () => {
@@ -94,6 +100,44 @@ export default function MyBookingsPage() {
       alert('Gagal mengajukan pengembalian: ' + err.message);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const openReschedule = (booking: Reservation) => {
+    const toLocal = (iso: string) => {
+      const d = new Date(iso);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+    setRescheduleTarget(booking);
+    setRescheduleForm({
+      start_time: toLocal(booking.start_time),
+      end_time: toLocal(booking.end_time),
+      meeting_title: booking.meeting_title ?? '',
+      person_in_charge: booking.person_in_charge ?? '',
+    });
+    setRescheduleError(null);
+  };
+
+  const handleReschedule = async () => {
+    if (!rescheduleTarget) return;
+    setRescheduleLoading(true);
+    setRescheduleError(null);
+    try {
+      const updated = await api.updateReservation(rescheduleTarget.reservation_id, {
+        start_time: new Date(rescheduleForm.start_time).toISOString(),
+        end_time: new Date(rescheduleForm.end_time).toISOString(),
+        meeting_title: rescheduleForm.meeting_title,
+        person_in_charge: rescheduleForm.person_in_charge,
+      });
+      setMyBookings((prev) =>
+        prev.map((b) => b.reservation_id === updated.reservation_id ? { ...b, ...updated } : b)
+      );
+      setRescheduleTarget(null);
+    } catch (err: any) {
+      setRescheduleError(err.message);
+    } finally {
+      setRescheduleLoading(false);
     }
   };
 
@@ -172,13 +216,22 @@ export default function MyBookingsPage() {
                     <td className="py-4 px-6">
                       <div className="flex flex-col gap-1.5">
                         {booking.status === 'Pending' && (
-                          <button
-                            onClick={() => handleCancel(booking.reservation_id)}
-                            disabled={actionLoading === booking.reservation_id}
-                            className="flex items-center gap-1 text-xs font-semibold text-rose-600 border border-rose-200 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 transition disabled:opacity-50 whitespace-nowrap"
-                          >
-                            <XCircle size={13} /> Batalkan
-                          </button>
+                          <>
+                            <button
+                              onClick={() => openReschedule(booking)}
+                              disabled={actionLoading === booking.reservation_id}
+                              className="flex items-center gap-1 text-xs font-semibold text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition disabled:opacity-50 whitespace-nowrap"
+                            >
+                              <Pencil size={13} /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleCancel(booking.reservation_id)}
+                              disabled={actionLoading === booking.reservation_id}
+                              className="flex items-center gap-1 text-xs font-semibold text-rose-600 border border-rose-200 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 transition disabled:opacity-50 whitespace-nowrap"
+                            >
+                              <XCircle size={13} /> Batalkan
+                            </button>
+                          </>
                         )}
                         {booking.status === 'Approved' && (
                           <button
@@ -215,6 +268,78 @@ export default function MyBookingsPage() {
           </div>
         </div>
       </div>
+      {/* Reschedule Modal */}
+      {rescheduleTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-slate-800">Edit / Reschedule Booking</h2>
+              <button onClick={() => setRescheduleTarget(null)} className="text-slate-400 hover:text-slate-600">
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm text-slate-500 mb-4">
+              Ruangan: <span className="font-semibold text-slate-700">{rescheduleTarget.rooms?.room_name ?? '-'}</span>
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Waktu Mulai</label>
+                <input
+                  type="datetime-local"
+                  value={rescheduleForm.start_time}
+                  onChange={(e) => setRescheduleForm((f) => ({ ...f, start_time: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Waktu Selesai</label>
+                <input
+                  type="datetime-local"
+                  value={rescheduleForm.end_time}
+                  onChange={(e) => setRescheduleForm((f) => ({ ...f, end_time: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Kegiatan</label>
+                <input
+                  type="text"
+                  value={rescheduleForm.meeting_title}
+                  onChange={(e) => setRescheduleForm((f) => ({ ...f, meeting_title: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Person in Charge</label>
+                <input
+                  type="text"
+                  value={rescheduleForm.person_in_charge}
+                  onChange={(e) => setRescheduleForm((f) => ({ ...f, person_in_charge: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+            </div>
+            {rescheduleError && (
+              <p className="mt-3 text-xs text-rose-600 font-medium">{rescheduleError}</p>
+            )}
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setRescheduleTarget(null)}
+                className="flex-1 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleReschedule}
+                disabled={rescheduleLoading}
+                className="flex-1 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                {rescheduleLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
